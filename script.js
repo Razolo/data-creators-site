@@ -11,6 +11,8 @@ let selectedSkills = [];
 
 // DOM elements
 const searchInput = document.getElementById('searchInput');
+const filterArea = document.getElementById('filterArea');
+const filterSeniority = document.getElementById('filterSeniority');
 const filterMode = document.getElementById('filterMode');
 const filterAvail = document.getElementById('filterAvail');
 const clearFilters = document.getElementById('clearFilters');
@@ -149,7 +151,7 @@ function parseHabilidades(raw) {
 
 // ========== CSV row → person object ==========
 function csvRowToPerson(row) {
-  // Columns: Nome, E-mail, Linkedin, Cidade/Estado, Modalidade, Formação, Habilidades, Experiência, Cargos, Portfólio, Disponibilidade
+  // Columns: Nome, E-mail, Linkedin, Cidade/Estado, Modalidade, Formação, Habilidades, Experiência, Cargos, Portfólio, Disponibilidade, Senioridade
   const nome = (row[0] || '').trim();
   if (!nome) return null;
 
@@ -163,6 +165,7 @@ function csvRowToPerson(row) {
   const cargos = smartSplit(cargosRaw).parts.map(s => s.trim()).filter(Boolean);
   const portfolio = (row[9] || '').trim();
   const disponibilidade = (row[10] || '').trim();
+  const senioridade = (row[11] || '').trim();
 
   // Ensure linkedin is a full URL
   let linkedinUrl = linkedin;
@@ -186,7 +189,8 @@ function csvRowToPerson(row) {
     experiencia,
     cargos,
     portfolio: portfolioUrl,
-    disponibilidade
+    disponibilidade,
+    senioridade
   };
 }
 
@@ -369,7 +373,7 @@ function renderCards() {
             ${person.modalidade}
           </span>
         </div>
-        <div class="card-roles">${roles}</div>
+        <div class="card-roles">${roles}${person.senioridade ? ` <span class="card-seniority">${person.senioridade}</span>` : ''}</div>
         <div class="card-skills">
           ${skills.map(s => `<span class="skill-tag">${s}</span>`).join('')}
           ${extra > 0 ? `<span class="skill-more">+${extra}</span>` : ''}
@@ -409,6 +413,8 @@ function getAvailLabel(avail) {
 // ========== Filter logic ==========
 function applyFilters() {
   const query = searchInput.value.toLowerCase().trim();
+  const area = filterArea.value;
+  const seniority = filterSeniority.value;
   const mode = filterMode.value;
   const avail = filterAvail.value;
 
@@ -419,10 +425,21 @@ function applyFilters() {
         person.cidade,
         person.formacao,
         person.experiencia,
+        person.senioridade,
         ...person.habilidades,
         ...person.cargos
       ].join(' ').toLowerCase();
       if (!searchable.includes(query)) return false;
+    }
+
+    if (area) {
+      const cargosStr = person.cargos.join(' ').toLowerCase();
+      if (!cargosStr.includes(area.toLowerCase())) return false;
+    }
+
+    if (seniority) {
+      const s = (person.senioridade || '').toLowerCase();
+      if (!s.includes(seniority.toLowerCase())) return false;
     }
 
     if (selectedSkills.length > 0) {
@@ -486,6 +503,12 @@ function openModal(index) {
         <span class="modal-meta-label">Disponibilidade</span>
         <span class="modal-meta-value">${person.disponibilidade || 'Consultar'}</span>
       </div>
+      ${person.senioridade ? `
+      <div class="modal-meta-item">
+        <span class="modal-meta-label">Senioridade</span>
+        <span class="modal-meta-value">${person.senioridade}</span>
+      </div>
+      ` : ''}
     </div>
 
     ${person.experiencia ? `
@@ -577,11 +600,15 @@ function bindEvents() {
     }
   });
 
+  filterArea.addEventListener('change', applyFilters);
+  filterSeniority.addEventListener('change', applyFilters);
   filterMode.addEventListener('change', applyFilters);
   filterAvail.addEventListener('change', applyFilters);
 
   clearFilters.addEventListener('click', () => {
     searchInput.value = '';
+    filterArea.value = '';
+    filterSeniority.value = '';
     filterMode.value = '';
     filterAvail.value = '';
     selectedSkills = [];

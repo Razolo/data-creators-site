@@ -543,6 +543,19 @@ body {
   line-height: 1.5;
 }
 
+.card-seniority {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: var(--navy);
+  background: var(--gray-100);
+  padding: 0.1rem 0.45rem;
+  border-radius: 3px;
+  margin-left: 0.35rem;
+  letter-spacing: 0.02em;
+  vertical-align: middle;
+}
+
 .card-skills {
   display: flex;
   flex-wrap: wrap;
