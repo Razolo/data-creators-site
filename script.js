@@ -76,24 +76,56 @@ function parseCSV(text) {
 // ========== Parse habilidades string ==========
 function parseHabilidades(raw) {
   if (!raw) return [];
-  // Split by "/" but not inside parentheses
-  // "Excel/Python(Pandas, Matplotlib)/SQL" → ["Excel", "Python", "Pandas", "Matplotlib", "SQL"]
+
+  // Count "/" outside parentheses to detect delimiter style
+  let slashCount = 0;
+  let depth = 0;
+  for (const ch of raw) {
+    if (ch === '(') depth++;
+    else if (ch === ')') depth--;
+    else if (ch === '/' && depth === 0) slashCount++;
+  }
+
+  // If "/" is used as main delimiter (most entries), split by "/"
+  // Otherwise split by "," but respect parentheses
+  const mainDelimiter = slashCount >= 2 ? '/' : ',';
+
+  // Split respecting parentheses
+  const parts = [];
+  let current = '';
+  let parenDepth = 0;
+  for (const ch of raw) {
+    if (ch === '(') parenDepth++;
+    else if (ch === ')') parenDepth--;
+
+    if (ch === mainDelimiter.charAt(0) && parenDepth === 0) {
+      parts.push(current);
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  if (current) parts.push(current);
+
   const skills = [];
-  const parts = raw.split('/');
 
   for (const part of parts) {
     const trimmed = part.trim();
     if (!trimmed) continue;
 
     // Check for parenthetical sub-skills: "Python(Pandas, Matplotlib, Seaborn)"
+    // Only expand if delimiter is "/" (sub-items separated by commas inside parens)
     const parenMatch = trimmed.match(/^([^(]+)\(([^)]+)\)$/);
-    if (parenMatch) {
+    if (parenMatch && mainDelimiter === '/') {
       const main = parenMatch[1].trim();
       if (main) skills.push(main);
       const subs = parenMatch[2].split(',').map(s => s.trim()).filter(Boolean);
       skills.push(...subs);
     } else {
-      skills.push(trimmed);
+      // Clean up parenthetical labels like "Machine Learning (ML)" → "Machine Learning"
+      // But keep short ones like "GA4" or "R"
+      const cleaned = trimmed.replace(/\s*\([^)]*\)\s*$/, '').trim();
+      if (cleaned) skills.push(cleaned);
     }
   }
 
