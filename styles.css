@@ -141,28 +141,40 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.6rem;
+  gap: 2rem;
   flex-wrap: wrap;
 }
 
+.company-item {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  transition: opacity 0.25s;
+  opacity: 0.45;
+}
+
+.company-item:hover {
+  opacity: 0.85;
+}
+
+.company-logo {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  border-radius: 4px;
+  filter: grayscale(100%);
+  transition: filter 0.25s;
+}
+
+.company-item:hover .company-logo {
+  filter: grayscale(0%);
+}
+
 .company-name {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--gray-400);
-  letter-spacing: 0.02em;
-  transition: color 0.2s;
-}
-
-.company-name:hover {
-  color: var(--navy);
-}
-
-.company-dot {
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: var(--gray-300);
-  flex-shrink: 0;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--gray-600);
+  letter-spacing: 0.01em;
 }
 
 /* ========== Filters (compact, single row) ========== */
@@ -841,11 +853,16 @@ body {
   }
 
   .hero-companies {
-    gap: 0.5rem;
+    gap: 1.25rem;
+  }
+
+  .company-logo {
+    width: 20px;
+    height: 20px;
   }
 
   .company-name {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
   }
 
   .filters-section {
