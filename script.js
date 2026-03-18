@@ -75,7 +75,7 @@ function parseCSV(text) {
 
 // ========== Smart split: detect delimiter and split respecting parentheses ==========
 function smartSplit(raw) {
-  if (!raw) return [];
+  if (!raw) return { parts: [], mainDelimiter: ',' };
 
   // Count delimiters outside parentheses to detect style
   let slashCount = 0;
