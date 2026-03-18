@@ -8,13 +8,12 @@ const SHEETS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRlL30U3
 let allData = [];
 let filteredData = [];
 let selectedSkills = [];
+let selectedSeniorities = [];
 
 // DOM elements
 const searchInput = document.getElementById('searchInput');
 const filterArea = document.getElementById('filterArea');
-const filterSeniority = document.getElementById('filterSeniority');
 const filterMode = document.getElementById('filterMode');
-const filterAvail = document.getElementById('filterAvail');
 const clearFilters = document.getElementById('clearFilters');
 const cardsGrid = document.getElementById('cardsGrid');
 const resultsCount = document.getElementById('resultsCount');
@@ -22,12 +21,17 @@ const modalOverlay = document.getElementById('modalOverlay');
 const modalContent = document.getElementById('modalContent');
 const modalClose = document.getElementById('modalClose');
 
-// Multi-select elements
+// Skill multi-select elements
 const skillSelectBtn = document.getElementById('skillSelectBtn');
 const skillDropdown = document.getElementById('skillDropdown');
 const skillOptions = document.getElementById('skillOptions');
 const skillSearchInput = document.getElementById('skillSearchInput');
 const selectedSkillsTags = document.getElementById('selectedSkillsTags');
+
+// Seniority multi-select elements
+const senioritySelectBtn = document.getElementById('senioritySelectBtn');
+const seniorityDropdown = document.getElementById('seniorityDropdown');
+const seniorityOptions = document.getElementById('seniorityOptions');
 
 // ========== CSV Parser ==========
 function parseCSV(text) {
@@ -331,6 +335,46 @@ function updateSkillUI() {
   `).join('');
 }
 
+// ========== Seniority Multi-Select Logic ==========
+function toggleSeniorityDropdown() {
+  const isOpen = seniorityDropdown.classList.contains('open');
+  if (isOpen) {
+    seniorityDropdown.classList.remove('open');
+    senioritySelectBtn.classList.remove('active');
+  } else {
+    seniorityDropdown.classList.add('open');
+    senioritySelectBtn.classList.add('active');
+  }
+}
+
+function toggleSeniority(value) {
+  const idx = selectedSeniorities.indexOf(value);
+  if (idx >= 0) {
+    selectedSeniorities.splice(idx, 1);
+  } else {
+    selectedSeniorities.push(value);
+  }
+  updateSeniorityUI();
+  applyFilters();
+}
+
+function updateSeniorityUI() {
+  if (selectedSeniorities.length === 0) {
+    senioritySelectBtn.querySelector('.multi-select-label').textContent = 'Senioridade';
+    senioritySelectBtn.classList.remove('has-selection');
+  } else {
+    senioritySelectBtn.querySelector('.multi-select-label').textContent = selectedSeniorities.join(', ');
+    senioritySelectBtn.classList.add('has-selection');
+  }
+
+  seniorityOptions.querySelectorAll('.multi-select-option').forEach(opt => {
+    const cb = opt.querySelector('input[type="checkbox"]');
+    const isChecked = selectedSeniorities.includes(cb.value);
+    cb.checked = isChecked;
+    opt.classList.toggle('checked', isChecked);
+  });
+}
+
 // ========== Render cards ==========
 function renderCards() {
   if (filteredData.length === 0) {
@@ -414,9 +458,7 @@ function getAvailLabel(avail) {
 function applyFilters() {
   const query = searchInput.value.toLowerCase().trim();
   const area = filterArea.value;
-  const seniority = filterSeniority.value;
   const mode = filterMode.value;
-  const avail = filterAvail.value;
 
   filteredData = allData.filter(person => {
     if (query) {
@@ -437,9 +479,10 @@ function applyFilters() {
       if (!cargosStr.includes(area.toLowerCase())) return false;
     }
 
-    if (seniority) {
+    if (selectedSeniorities.length > 0) {
       const s = (person.senioridade || '').toLowerCase();
-      if (!s.includes(seniority.toLowerCase())) return false;
+      const matchesAny = selectedSeniorities.some(sel => s.includes(sel.toLowerCase()));
+      if (!matchesAny) return false;
     }
 
     if (selectedSkills.length > 0) {
@@ -452,17 +495,6 @@ function applyFilters() {
 
     if (mode) {
       if (!person.modalidade.toLowerCase().includes(mode.toLowerCase())) return false;
-    }
-
-    if (avail) {
-      const a = (person.disponibilidade || '').toLowerCase();
-      if (avail === 'Imediata') {
-        if (!a.includes('imediata') && !a.includes('imediato')) return false;
-      } else if (avail === '1 semana') {
-        if (!a.includes('1 semana')) return false;
-      } else if (avail === 'Mediante') {
-        if (!a.includes('mediante') && !a.includes('negoci')) return false;
-      }
     }
 
     return true;
@@ -593,26 +625,40 @@ function bindEvents() {
     }
   });
 
+  // Seniority multi-select events
+  senioritySelectBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleSeniorityDropdown();
+  });
+
+  seniorityOptions.addEventListener('change', (e) => {
+    if (e.target.type === 'checkbox') {
+      toggleSeniority(e.target.value);
+    }
+  });
+
   document.addEventListener('click', (e) => {
-    if (!e.target.closest('.multi-select')) {
+    if (!e.target.closest('#skillMultiSelect')) {
       skillDropdown.classList.remove('open');
       skillSelectBtn.classList.remove('active');
+    }
+    if (!e.target.closest('#seniorityMultiSelect')) {
+      seniorityDropdown.classList.remove('open');
+      senioritySelectBtn.classList.remove('active');
     }
   });
 
   filterArea.addEventListener('change', applyFilters);
-  filterSeniority.addEventListener('change', applyFilters);
   filterMode.addEventListener('change', applyFilters);
-  filterAvail.addEventListener('change', applyFilters);
 
   clearFilters.addEventListener('click', () => {
     searchInput.value = '';
     filterArea.value = '';
-    filterSeniority.value = '';
     filterMode.value = '';
-    filterAvail.value = '';
     selectedSkills = [];
+    selectedSeniorities = [];
     updateSkillUI();
+    updateSeniorityUI();
     applyFilters();
   });
 

@@ -87,12 +87,28 @@
           <option value="Analytics">Analytics Engineer</option>
           <option value="BI">BI / Business Intelligence</option>
         </select>
-        <select id="filterSeniority" class="filter-select">
-          <option value="">Senioridade</option>
-          <option value="Júnior">Júnior</option>
-          <option value="Pleno">Pleno</option>
-          <option value="Sênior">Sênior</option>
-        </select>
+        <div class="multi-select" id="seniorityMultiSelect">
+          <button class="multi-select-btn" id="senioritySelectBtn" type="button">
+            <span class="multi-select-label">Senioridade</span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <div class="multi-select-dropdown" id="seniorityDropdown">
+            <div class="multi-select-options" id="seniorityOptions">
+              <label class="multi-select-option" data-seniority="Júnior">
+                <input type="checkbox" value="Júnior">
+                <span>Júnior</span>
+              </label>
+              <label class="multi-select-option" data-seniority="Pleno">
+                <input type="checkbox" value="Pleno">
+                <span>Pleno</span>
+              </label>
+              <label class="multi-select-option" data-seniority="Sênior">
+                <input type="checkbox" value="Sênior">
+                <span>Sênior</span>
+              </label>
+            </div>
+          </div>
+        </div>
         <div class="multi-select" id="skillMultiSelect">
           <button class="multi-select-btn" id="skillSelectBtn" type="button">
             <span class="multi-select-label">Habilidades</span>
@@ -111,12 +127,6 @@
           <option value="Remoto">Remoto</option>
           <option value="Híbrido">Híbrido</option>
           <option value="Presencial">Presencial</option>
-        </select>
-        <select id="filterAvail" class="filter-select">
-          <option value="">Disponibilidade</option>
-          <option value="Imediata">Imediata</option>
-          <option value="1 semana">1 semana</option>
-          <option value="Mediante">A negociar</option>
         </select>
         <button class="btn-clear" id="clearFilters">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
