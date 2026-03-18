@@ -33,21 +33,21 @@
     <div class="hero-inner">
       <h2 class="hero-title">Encontre o talento<br>certo em dados</h2>
       <p class="hero-desc">Profissionais formados e mentorados pela Data Creators, prontos para transformar dados em decisões estratégicas para sua empresa.</p>
-      <div class="hero-stats">
-        <div class="stat">
-          <span class="stat-number" id="stat-total">0</span>
-          <span class="stat-label">Talentos</span>
-        </div>
-        <div class="stat-divider"></div>
-        <div class="stat">
-          <span class="stat-number" id="stat-skills">0</span>
-          <span class="stat-label">Habilidades</span>
-        </div>
-        <div class="stat-divider"></div>
-        <div class="stat">
-          <span class="stat-number" id="stat-cities">0</span>
-          <span class="stat-label">Cidades</span>
-        </div>
+      <p class="hero-companies-label">Data Creators nas maiores empresas do Brasil</p>
+      <div class="hero-companies">
+        <span class="company-name">iFood</span>
+        <span class="company-dot"></span>
+        <span class="company-name">Nubank</span>
+        <span class="company-dot"></span>
+        <span class="company-name">Mercado Livre</span>
+        <span class="company-dot"></span>
+        <span class="company-name">Shopee</span>
+        <span class="company-dot"></span>
+        <span class="company-name">Itaú</span>
+        <span class="company-dot"></span>
+        <span class="company-name">Boticário</span>
+        <span class="company-dot"></span>
+        <span class="company-name">NTT Data</span>
       </div>
     </div>
   </section>
@@ -63,9 +63,19 @@
           </svg>
           <input type="text" id="searchInput" placeholder="Buscar por nome, habilidade, cidade...">
         </div>
-        <select id="filterSkill" class="filter-select">
-          <option value="">Habilidade</option>
-        </select>
+        <div class="multi-select" id="skillMultiSelect">
+          <button class="multi-select-btn" id="skillSelectBtn" type="button">
+            <span class="multi-select-label">Habilidades</span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <div class="multi-select-dropdown" id="skillDropdown">
+            <div class="multi-select-search">
+              <input type="text" id="skillSearchInput" placeholder="Buscar habilidade...">
+            </div>
+            <div class="multi-select-options" id="skillOptions"></div>
+          </div>
+        </div>
+        <div class="selected-skills" id="selectedSkillsTags"></div>
         <select id="filterMode" class="filter-select">
           <option value="">Modalidade</option>
           <option value="Remoto">Remoto</option>

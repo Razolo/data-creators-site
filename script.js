@@ -4,10 +4,10 @@
 
 let allData = [];
 let filteredData = [];
+let selectedSkills = [];
 
 // DOM elements
 const searchInput = document.getElementById('searchInput');
-const filterSkill = document.getElementById('filterSkill');
 const filterMode = document.getElementById('filterMode');
 const filterAvail = document.getElementById('filterAvail');
 const clearFilters = document.getElementById('clearFilters');
@@ -17,6 +17,13 @@ const modalOverlay = document.getElementById('modalOverlay');
 const modalContent = document.getElementById('modalContent');
 const modalClose = document.getElementById('modalClose');
 
+// Multi-select elements
+const skillSelectBtn = document.getElementById('skillSelectBtn');
+const skillDropdown = document.getElementById('skillDropdown');
+const skillOptions = document.getElementById('skillOptions');
+const skillSearchInput = document.getElementById('skillSearchInput');
+const selectedSkillsTags = document.getElementById('selectedSkillsTags');
+
 // ========== Init ==========
 async function init() {
   try {
@@ -25,7 +32,6 @@ async function init() {
     filteredData = [...allData];
 
     populateSkillFilter();
-    updateStats();
     renderCards();
     bindEvents();
   } catch (err) {
@@ -34,7 +40,7 @@ async function init() {
   }
 }
 
-// ========== Populate skill filter ==========
+// ========== Populate skill filter (multi-select) ==========
 function populateSkillFilter() {
   const skillCount = {};
   allData.forEach(person => {
@@ -48,43 +54,83 @@ function populateSkillFilter() {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 30);
 
-  sorted.forEach(([skill, count]) => {
-    const opt = document.createElement('option');
-    opt.value = skill;
-    opt.textContent = `${skill} (${count})`;
-    filterSkill.appendChild(opt);
+  skillOptions.innerHTML = sorted.map(([skill, count]) => `
+    <label class="multi-select-option" data-skill="${skill}">
+      <input type="checkbox" value="${skill}">
+      <span>${skill}</span>
+      <span style="margin-left:auto;color:var(--gray-400);font-size:0.7rem">${count}</span>
+    </label>
+  `).join('');
+}
+
+// ========== Skill Multi-Select Logic ==========
+function toggleSkillDropdown() {
+  const isOpen = skillDropdown.classList.contains('open');
+  if (isOpen) {
+    skillDropdown.classList.remove('open');
+    skillSelectBtn.classList.remove('active');
+  } else {
+    skillDropdown.classList.add('open');
+    skillSelectBtn.classList.add('active');
+    skillSearchInput.value = '';
+    filterSkillOptions('');
+    skillSearchInput.focus();
+  }
+}
+
+function filterSkillOptions(query) {
+  const q = query.toLowerCase();
+  skillOptions.querySelectorAll('.multi-select-option').forEach(opt => {
+    const skill = opt.dataset.skill.toLowerCase();
+    opt.style.display = skill.includes(q) ? 'flex' : 'none';
   });
 }
 
-// ========== Update stats ==========
-function updateStats() {
-  const totalEl = document.getElementById('stat-total');
-  const skillsEl = document.getElementById('stat-skills');
-  const citiesEl = document.getElementById('stat-cities');
-
-  const allSkills = new Set();
-  const allCities = new Set();
-  allData.forEach(p => {
-    p.habilidades.forEach(s => { if (s.trim()) allSkills.add(s.trim()); });
-    if (p.cidade && p.cidade.trim()) allCities.add(p.cidade.trim());
-  });
-
-  animateNumber(totalEl, allData.length);
-  animateNumber(skillsEl, allSkills.size);
-  animateNumber(citiesEl, allCities.size);
+function toggleSkill(skill) {
+  const idx = selectedSkills.indexOf(skill);
+  if (idx >= 0) {
+    selectedSkills.splice(idx, 1);
+  } else {
+    selectedSkills.push(skill);
+  }
+  updateSkillUI();
+  applyFilters();
 }
 
-function animateNumber(el, target) {
-  let current = 0;
-  const step = Math.max(1, Math.floor(target / 30));
-  const interval = setInterval(() => {
-    current += step;
-    if (current >= target) {
-      current = target;
-      clearInterval(interval);
-    }
-    el.textContent = current;
-  }, 30);
+function removeSkill(skill) {
+  const idx = selectedSkills.indexOf(skill);
+  if (idx >= 0) {
+    selectedSkills.splice(idx, 1);
+    updateSkillUI();
+    applyFilters();
+  }
+}
+
+function updateSkillUI() {
+  // Update button label
+  if (selectedSkills.length === 0) {
+    skillSelectBtn.querySelector('.multi-select-label').textContent = 'Habilidades';
+    skillSelectBtn.classList.remove('has-selection');
+  } else {
+    skillSelectBtn.querySelector('.multi-select-label').textContent = `${selectedSkills.length} selecionada${selectedSkills.length > 1 ? 's' : ''}`;
+    skillSelectBtn.classList.add('has-selection');
+  }
+
+  // Update checkboxes
+  skillOptions.querySelectorAll('.multi-select-option').forEach(opt => {
+    const cb = opt.querySelector('input[type="checkbox"]');
+    const isChecked = selectedSkills.includes(cb.value);
+    cb.checked = isChecked;
+    opt.classList.toggle('checked', isChecked);
+  });
+
+  // Render tags
+  selectedSkillsTags.innerHTML = selectedSkills.map(skill => `
+    <span class="skill-filter-tag" data-skill="${skill}">
+      ${skill}
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+    </span>
+  `).join('');
 }
 
 // ========== Render cards ==========
@@ -169,7 +215,6 @@ function getAvailLabel(avail) {
 // ========== Filter logic ==========
 function applyFilters() {
   const query = searchInput.value.toLowerCase().trim();
-  const skill = filterSkill.value;
   const mode = filterMode.value;
   const avail = filterAvail.value;
 
@@ -187,12 +232,13 @@ function applyFilters() {
       if (!searchable.includes(query)) return false;
     }
 
-    // Skill filter
-    if (skill) {
-      const hasSkill = person.habilidades.some(s =>
-        s.toLowerCase().includes(skill.toLowerCase())
+    // Multi-skill filter (AND logic: must have ALL selected skills)
+    if (selectedSkills.length > 0) {
+      const personSkills = person.habilidades.map(s => s.toLowerCase());
+      const hasAll = selectedSkills.every(skill =>
+        personSkills.some(ps => ps.includes(skill.toLowerCase()))
       );
-      if (!hasSkill) return false;
+      if (!hasAll) return false;
     }
 
     // Mode filter
@@ -302,22 +348,60 @@ function closeModal() {
 
 // ========== Event Bindings ==========
 function bindEvents() {
-  // Filters
+  // Search with debounce
   let debounceTimer;
   searchInput.addEventListener('input', () => {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(applyFilters, 250);
   });
 
-  filterSkill.addEventListener('change', applyFilters);
+  // Multi-select skill dropdown
+  skillSelectBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleSkillDropdown();
+  });
+
+  skillSearchInput.addEventListener('input', (e) => {
+    filterSkillOptions(e.target.value);
+  });
+
+  skillSearchInput.addEventListener('click', (e) => {
+    e.stopPropagation();
+  });
+
+  skillOptions.addEventListener('change', (e) => {
+    if (e.target.type === 'checkbox') {
+      toggleSkill(e.target.value);
+    }
+  });
+
+  // Skill tag removal
+  selectedSkillsTags.addEventListener('click', (e) => {
+    const tag = e.target.closest('.skill-filter-tag');
+    if (tag) {
+      removeSkill(tag.dataset.skill);
+    }
+  });
+
+  // Close dropdown on outside click
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.multi-select')) {
+      skillDropdown.classList.remove('open');
+      skillSelectBtn.classList.remove('active');
+    }
+  });
+
+  // Other filters
   filterMode.addEventListener('change', applyFilters);
   filterAvail.addEventListener('change', applyFilters);
 
+  // Clear all
   clearFilters.addEventListener('click', () => {
     searchInput.value = '';
-    filterSkill.value = '';
     filterMode.value = '';
     filterAvail.value = '';
+    selectedSkills = [];
+    updateSkillUI();
     applyFilters();
   });
 
