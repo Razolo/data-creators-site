@@ -9,10 +9,10 @@ let allData = [];
 let filteredData = [];
 let selectedSkills = [];
 let selectedSeniorities = [];
+let selectedAreas = [];
 
 // DOM elements
 const searchInput = document.getElementById('searchInput');
-const filterArea = document.getElementById('filterArea');
 const filterMode = document.getElementById('filterMode');
 const clearFilters = document.getElementById('clearFilters');
 const cardsGrid = document.getElementById('cardsGrid');
@@ -27,6 +27,11 @@ const skillDropdown = document.getElementById('skillDropdown');
 const skillOptions = document.getElementById('skillOptions');
 const skillSearchInput = document.getElementById('skillSearchInput');
 const selectedSkillsTags = document.getElementById('selectedSkillsTags');
+
+// Area multi-select elements
+const areaSelectBtn = document.getElementById('areaSelectBtn');
+const areaDropdown = document.getElementById('areaDropdown');
+const areaOptions = document.getElementById('areaOptions');
 
 // Seniority multi-select elements
 const senioritySelectBtn = document.getElementById('senioritySelectBtn');
@@ -335,6 +340,48 @@ function updateSkillUI() {
   `).join('');
 }
 
+// ========== Area Multi-Select Logic ==========
+const areaLabels = { Analista: 'Analista', Engenheiro: 'Engenheiro', Cientista: 'Cientista', Analytics: 'Analytics', BI: 'BI' };
+
+function toggleAreaDropdown() {
+  const isOpen = areaDropdown.classList.contains('open');
+  if (isOpen) {
+    areaDropdown.classList.remove('open');
+    areaSelectBtn.classList.remove('active');
+  } else {
+    areaDropdown.classList.add('open');
+    areaSelectBtn.classList.add('active');
+  }
+}
+
+function toggleArea(value) {
+  const idx = selectedAreas.indexOf(value);
+  if (idx >= 0) {
+    selectedAreas.splice(idx, 1);
+  } else {
+    selectedAreas.push(value);
+  }
+  updateAreaUI();
+  applyFilters();
+}
+
+function updateAreaUI() {
+  if (selectedAreas.length === 0) {
+    areaSelectBtn.querySelector('.multi-select-label').textContent = 'Área';
+    areaSelectBtn.classList.remove('has-selection');
+  } else {
+    areaSelectBtn.querySelector('.multi-select-label').textContent = selectedAreas.map(a => areaLabels[a] || a).join(', ');
+    areaSelectBtn.classList.add('has-selection');
+  }
+
+  areaOptions.querySelectorAll('.multi-select-option').forEach(opt => {
+    const cb = opt.querySelector('input[type="checkbox"]');
+    const isChecked = selectedAreas.includes(cb.value);
+    cb.checked = isChecked;
+    opt.classList.toggle('checked', isChecked);
+  });
+}
+
 // ========== Seniority Multi-Select Logic ==========
 function toggleSeniorityDropdown() {
   const isOpen = seniorityDropdown.classList.contains('open');
@@ -457,7 +504,6 @@ function getAvailLabel(avail) {
 // ========== Filter logic ==========
 function applyFilters() {
   const query = searchInput.value.toLowerCase().trim();
-  const area = filterArea.value;
   const mode = filterMode.value;
 
   filteredData = allData.filter(person => {
@@ -474,9 +520,10 @@ function applyFilters() {
       if (!searchable.includes(query)) return false;
     }
 
-    if (area) {
+    if (selectedAreas.length > 0) {
       const cargosStr = person.cargos.join(' ').toLowerCase();
-      if (!cargosStr.includes(area.toLowerCase())) return false;
+      const matchesAny = selectedAreas.some(a => cargosStr.includes(a.toLowerCase()));
+      if (!matchesAny) return false;
     }
 
     if (selectedSeniorities.length > 0) {
@@ -626,6 +673,18 @@ function bindEvents() {
     }
   });
 
+  // Area multi-select events
+  areaSelectBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleAreaDropdown();
+  });
+
+  areaOptions.addEventListener('change', (e) => {
+    if (e.target.type === 'checkbox') {
+      toggleArea(e.target.value);
+    }
+  });
+
   // Seniority multi-select events
   senioritySelectBtn.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -643,21 +702,25 @@ function bindEvents() {
       skillDropdown.classList.remove('open');
       skillSelectBtn.classList.remove('active');
     }
+    if (!e.target.closest('#areaMultiSelect')) {
+      areaDropdown.classList.remove('open');
+      areaSelectBtn.classList.remove('active');
+    }
     if (!e.target.closest('#seniorityMultiSelect')) {
       seniorityDropdown.classList.remove('open');
       senioritySelectBtn.classList.remove('active');
     }
   });
 
-  filterArea.addEventListener('change', applyFilters);
   filterMode.addEventListener('change', applyFilters);
 
   clearFilters.addEventListener('click', () => {
     searchInput.value = '';
-    filterArea.value = '';
     filterMode.value = '';
+    selectedAreas = [];
     selectedSkills = [];
     selectedSeniorities = [];
+    updateAreaUI();
     updateSkillUI();
     updateSeniorityUI();
     applyFilters();

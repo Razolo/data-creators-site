@@ -79,14 +79,36 @@
           </svg>
           <input type="text" id="searchInput" placeholder="Buscar por nome, habilidade, cidade...">
         </div>
-        <select id="filterArea" class="filter-select">
-          <option value="">Área</option>
-          <option value="Analista">Analista de Dados</option>
-          <option value="Engenheiro">Engenheiro de Dados</option>
-          <option value="Cientista">Cientista de Dados</option>
-          <option value="Analytics">Analytics Engineer</option>
-          <option value="BI">BI / Business Intelligence</option>
-        </select>
+        <div class="multi-select" id="areaMultiSelect">
+          <button class="multi-select-btn" id="areaSelectBtn" type="button">
+            <span class="multi-select-label">Área</span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <div class="multi-select-dropdown" id="areaDropdown">
+            <div class="multi-select-options" id="areaOptions">
+              <label class="multi-select-option" data-area="Analista">
+                <input type="checkbox" value="Analista">
+                <span>Analista de Dados</span>
+              </label>
+              <label class="multi-select-option" data-area="Engenheiro">
+                <input type="checkbox" value="Engenheiro">
+                <span>Engenheiro de Dados</span>
+              </label>
+              <label class="multi-select-option" data-area="Cientista">
+                <input type="checkbox" value="Cientista">
+                <span>Cientista de Dados</span>
+              </label>
+              <label class="multi-select-option" data-area="Analytics">
+                <input type="checkbox" value="Analytics">
+                <span>Analytics Engineer</span>
+              </label>
+              <label class="multi-select-option" data-area="BI">
+                <input type="checkbox" value="BI">
+                <span>BI / Business Intelligence</span>
+              </label>
+            </div>
+          </div>
+        </div>
         <div class="multi-select" id="seniorityMultiSelect">
           <button class="multi-select-btn" id="senioritySelectBtn" type="button">
             <span class="multi-select-label">Senioridade</span>
