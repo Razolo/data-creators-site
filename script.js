@@ -1,6 +1,9 @@
 // ========================================
 // Data Creators - Main Script
+// Google Sheets live data + JSON fallback
 // ========================================
+
+const SHEETS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRlL30U3GNC8XDriVPwmUjbLlClozuWISNq7winR0b_sU4G3WyT7LAf_fukQzGMAoNUbIPJ3_HMM9a_/pub?output=csv';
 
 let allData = [];
 let filteredData = [];
@@ -24,11 +27,157 @@ const skillOptions = document.getElementById('skillOptions');
 const skillSearchInput = document.getElementById('skillSearchInput');
 const selectedSkillsTags = document.getElementById('selectedSkillsTags');
 
+// ========== CSV Parser ==========
+function parseCSV(text) {
+  const rows = [];
+  let current = '';
+  let inQuotes = false;
+  let row = [];
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    const next = text[i + 1];
+
+    if (inQuotes) {
+      if (ch === '"' && next === '"') {
+        current += '"';
+        i++; // skip escaped quote
+      } else if (ch === '"') {
+        inQuotes = false;
+      } else {
+        current += ch;
+      }
+    } else {
+      if (ch === '"') {
+        inQuotes = true;
+      } else if (ch === ',') {
+        row.push(current.trim());
+        current = '';
+      } else if (ch === '\n' || (ch === '\r' && next === '\n')) {
+        row.push(current.trim());
+        if (row.length > 1 || row[0] !== '') rows.push(row);
+        row = [];
+        current = '';
+        if (ch === '\r') i++; // skip \n after \r
+      } else {
+        current += ch;
+      }
+    }
+  }
+  // Last row
+  if (current || row.length > 0) {
+    row.push(current.trim());
+    if (row.length > 1 || row[0] !== '') rows.push(row);
+  }
+
+  return rows;
+}
+
+// ========== Parse habilidades string ==========
+function parseHabilidades(raw) {
+  if (!raw) return [];
+  // Split by "/" but not inside parentheses
+  // "Excel/Python(Pandas, Matplotlib)/SQL" → ["Excel", "Python", "Pandas", "Matplotlib", "SQL"]
+  const skills = [];
+  const parts = raw.split('/');
+
+  for (const part of parts) {
+    const trimmed = part.trim();
+    if (!trimmed) continue;
+
+    // Check for parenthetical sub-skills: "Python(Pandas, Matplotlib, Seaborn)"
+    const parenMatch = trimmed.match(/^([^(]+)\(([^)]+)\)$/);
+    if (parenMatch) {
+      const main = parenMatch[1].trim();
+      if (main) skills.push(main);
+      const subs = parenMatch[2].split(',').map(s => s.trim()).filter(Boolean);
+      skills.push(...subs);
+    } else {
+      skills.push(trimmed);
+    }
+  }
+
+  return skills.filter(s => s.length > 0);
+}
+
+// ========== CSV row → person object ==========
+function csvRowToPerson(row) {
+  // Columns: Nome, E-mail, Linkedin, Cidade/Estado, Modalidade, Formação, Habilidades, Experiência, Cargos, Portfólio, Disponibilidade
+  const nome = (row[0] || '').trim();
+  if (!nome) return null;
+
+  const linkedin = (row[2] || '').trim();
+  const cidade = (row[3] || '').trim();
+  const modalidade = (row[4] || '').trim();
+  const formacao = (row[5] || '').trim();
+  const habilidades = parseHabilidades(row[6] || '');
+  const experiencia = (row[7] || '').trim();
+  const cargos = (row[8] || '').split('/').map(s => s.trim()).filter(Boolean);
+  const portfolio = (row[9] || '').trim();
+  const disponibilidade = (row[10] || '').trim();
+
+  // Ensure linkedin is a full URL
+  let linkedinUrl = linkedin;
+  if (linkedin && !linkedin.startsWith('http')) {
+    linkedinUrl = 'https://' + linkedin;
+  }
+
+  // Ensure portfolio is a full URL
+  let portfolioUrl = portfolio;
+  if (portfolio && !portfolio.startsWith('http')) {
+    portfolioUrl = 'https://' + portfolio;
+  }
+
+  return {
+    nome,
+    linkedin: linkedinUrl,
+    cidade,
+    modalidade,
+    formacao,
+    habilidades,
+    experiencia,
+    cargos,
+    portfolio: portfolioUrl,
+    disponibilidade
+  };
+}
+
+// ========== Fetch data ==========
+async function fetchData() {
+  // Try Google Sheets first
+  try {
+    const res = await fetch(SHEETS_CSV_URL);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = await res.text();
+    const rows = parseCSV(text);
+
+    if (rows.length < 2) throw new Error('No data rows');
+
+    // Skip header row (index 0), parse the rest
+    const people = rows.slice(1)
+      .map(csvRowToPerson)
+      .filter(p => p !== null && p.nome);
+
+    if (people.length > 0) {
+      console.log(`Loaded ${people.length} profiles from Google Sheets`);
+      return people;
+    }
+    throw new Error('No valid records parsed');
+  } catch (err) {
+    console.warn('Google Sheets fetch failed, falling back to data.json:', err.message);
+  }
+
+  // Fallback to static JSON
+  const res = await fetch('./data.json');
+  const data = await res.json();
+  console.log(`Loaded ${data.length} profiles from data.json (fallback)`);
+  return data;
+}
+
 // ========== Init ==========
 async function init() {
   try {
-    const res = await fetch('./data.json');
-    allData = await res.json();
+    allData = await fetchData();
     filteredData = [...allData];
 
     populateSkillFilter();
@@ -107,7 +256,6 @@ function removeSkill(skill) {
 }
 
 function updateSkillUI() {
-  // Update button label
   if (selectedSkills.length === 0) {
     skillSelectBtn.querySelector('.multi-select-label').textContent = 'Habilidades';
     skillSelectBtn.classList.remove('has-selection');
@@ -116,7 +264,6 @@ function updateSkillUI() {
     skillSelectBtn.classList.add('has-selection');
   }
 
-  // Update checkboxes
   skillOptions.querySelectorAll('.multi-select-option').forEach(opt => {
     const cb = opt.querySelector('input[type="checkbox"]');
     const isChecked = selectedSkills.includes(cb.value);
@@ -124,7 +271,6 @@ function updateSkillUI() {
     opt.classList.toggle('checked', isChecked);
   });
 
-  // Render tags
   selectedSkillsTags.innerHTML = selectedSkills.map(skill => `
     <span class="skill-filter-tag" data-skill="${skill}">
       ${skill}
@@ -219,7 +365,6 @@ function applyFilters() {
   const avail = filterAvail.value;
 
   filteredData = allData.filter(person => {
-    // Search
     if (query) {
       const searchable = [
         person.nome,
@@ -232,7 +377,6 @@ function applyFilters() {
       if (!searchable.includes(query)) return false;
     }
 
-    // Multi-skill filter (AND logic: must have ALL selected skills)
     if (selectedSkills.length > 0) {
       const personSkills = person.habilidades.map(s => s.toLowerCase());
       const hasAll = selectedSkills.every(skill =>
@@ -241,12 +385,10 @@ function applyFilters() {
       if (!hasAll) return false;
     }
 
-    // Mode filter
     if (mode) {
       if (!person.modalidade.toLowerCase().includes(mode.toLowerCase())) return false;
     }
 
-    // Availability filter
     if (avail) {
       const a = (person.disponibilidade || '').toLowerCase();
       if (avail === 'Imediata') {
@@ -348,14 +490,12 @@ function closeModal() {
 
 // ========== Event Bindings ==========
 function bindEvents() {
-  // Search with debounce
   let debounceTimer;
   searchInput.addEventListener('input', () => {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(applyFilters, 250);
   });
 
-  // Multi-select skill dropdown
   skillSelectBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     toggleSkillDropdown();
@@ -375,7 +515,6 @@ function bindEvents() {
     }
   });
 
-  // Skill tag removal
   selectedSkillsTags.addEventListener('click', (e) => {
     const tag = e.target.closest('.skill-filter-tag');
     if (tag) {
@@ -383,7 +522,6 @@ function bindEvents() {
     }
   });
 
-  // Close dropdown on outside click
   document.addEventListener('click', (e) => {
     if (!e.target.closest('.multi-select')) {
       skillDropdown.classList.remove('open');
@@ -391,11 +529,9 @@ function bindEvents() {
     }
   });
 
-  // Other filters
   filterMode.addEventListener('change', applyFilters);
   filterAvail.addEventListener('change', applyFilters);
 
-  // Clear all
   clearFilters.addEventListener('click', () => {
     searchInput.value = '';
     filterMode.value = '';
@@ -405,7 +541,6 @@ function bindEvents() {
     applyFilters();
   });
 
-  // Card clicks
   cardsGrid.addEventListener('click', (e) => {
     const card = e.target.closest('.card');
     if (card) {
@@ -414,7 +549,6 @@ function bindEvents() {
     }
   });
 
-  // Modal close
   modalClose.addEventListener('click', closeModal);
   modalOverlay.addEventListener('click', (e) => {
     if (e.target === modalOverlay) closeModal();
