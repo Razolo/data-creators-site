@@ -480,8 +480,9 @@ function applyFilters() {
     }
 
     if (selectedSeniorities.length > 0) {
-      const s = (person.senioridade || '').toLowerCase();
-      const matchesAny = selectedSeniorities.some(sel => s.includes(sel.toLowerCase()));
+      const normalize = str => str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const s = normalize(person.senioridade || '');
+      const matchesAny = selectedSeniorities.some(sel => s.includes(normalize(sel)));
       if (!matchesAny) return false;
     }
 
