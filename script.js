@@ -73,22 +73,28 @@ function parseCSV(text) {
   return rows;
 }
 
-// ========== Parse habilidades string ==========
-function parseHabilidades(raw) {
+// ========== Smart split: detect delimiter and split respecting parentheses ==========
+function smartSplit(raw) {
   if (!raw) return [];
 
-  // Count "/" outside parentheses to detect delimiter style
+  // Count delimiters outside parentheses to detect style
   let slashCount = 0;
+  let pipeCount = 0;
   let depth = 0;
   for (const ch of raw) {
     if (ch === '(') depth++;
     else if (ch === ')') depth--;
-    else if (ch === '/' && depth === 0) slashCount++;
+    else if (depth === 0) {
+      if (ch === '/') slashCount++;
+      else if (ch === '|') pipeCount++;
+    }
   }
 
-  // If "/" is used as main delimiter (most entries), split by "/"
-  // Otherwise split by "," but respect parentheses
-  const mainDelimiter = slashCount >= 2 ? '/' : ',';
+  // Priority: pipe > slash > comma
+  let mainDelimiter;
+  if (pipeCount >= 2) mainDelimiter = '|';
+  else if (slashCount >= 2) mainDelimiter = '/';
+  else mainDelimiter = ',';
 
   // Split respecting parentheses
   const parts = [];
@@ -98,7 +104,7 @@ function parseHabilidades(raw) {
     if (ch === '(') parenDepth++;
     else if (ch === ')') parenDepth--;
 
-    if (ch === mainDelimiter.charAt(0) && parenDepth === 0) {
+    if (ch === mainDelimiter && parenDepth === 0) {
       parts.push(current);
       current = '';
     } else {
@@ -106,6 +112,15 @@ function parseHabilidades(raw) {
     }
   }
   if (current) parts.push(current);
+
+  return { parts, mainDelimiter };
+}
+
+// ========== Parse habilidades string ==========
+function parseHabilidades(raw) {
+  if (!raw) return [];
+
+  const { parts, mainDelimiter } = smartSplit(raw);
 
   const skills = [];
 
@@ -144,7 +159,8 @@ function csvRowToPerson(row) {
   const formacao = (row[5] || '').trim();
   const habilidades = parseHabilidades(row[6] || '');
   const experiencia = (row[7] || '').trim();
-  const cargos = (row[8] || '').split('/').map(s => s.trim()).filter(Boolean);
+  const cargosRaw = (row[8] || '');
+  const cargos = smartSplit(cargosRaw).parts.map(s => s.trim()).filter(Boolean);
   const portfolio = (row[9] || '').trim();
   const disponibilidade = (row[10] || '').trim();
 
