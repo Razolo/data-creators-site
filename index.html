@@ -127,6 +127,22 @@
                 <input type="checkbox" value="BI">
                 <span>BI / Business Intelligence</span>
               </label>
+              <label class="multi-select-option" data-area="Consultor">
+                <input type="checkbox" value="Consultor">
+                <span>Consultor</span>
+              </label>
+              <label class="multi-select-option" data-area="Coordenador">
+                <input type="checkbox" value="Coordenador">
+                <span>Coordenador / Gestor</span>
+              </label>
+              <label class="multi-select-option" data-area="Especialista">
+                <input type="checkbox" value="Especialista">
+                <span>Especialista</span>
+              </label>
+              <label class="multi-select-option" data-area="Lead">
+                <input type="checkbox" value="Lead">
+                <span>Tech Lead</span>
+              </label>
             </div>
           </div>
         </div>
@@ -149,7 +165,27 @@
                 <input type="checkbox" value="Sênior">
                 <span>Sênior</span>
               </label>
+              <label class="multi-select-option" data-seniority="Especialista">
+                <input type="checkbox" value="Especialista">
+                <span>Especialista</span>
+              </label>
+              <label class="multi-select-option" data-seniority="Coordenador">
+                <input type="checkbox" value="Coordenador">
+                <span>Coordenador / Gestor</span>
+              </label>
             </div>
+          </div>
+        </div>
+        <div class="multi-select" id="cityMultiSelect">
+          <button class="multi-select-btn" id="citySelectBtn" type="button">
+            <span class="multi-select-label">Cidade</span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <div class="multi-select-dropdown" id="cityDropdown">
+            <div class="multi-select-search">
+              <input type="text" id="citySearchInput" placeholder="Buscar cidade...">
+            </div>
+            <div class="multi-select-options" id="cityOptions"></div>
           </div>
         </div>
         <div class="multi-select" id="skillMultiSelect">

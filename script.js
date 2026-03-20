@@ -38,6 +38,13 @@ const senioritySelectBtn = document.getElementById('senioritySelectBtn');
 const seniorityDropdown = document.getElementById('seniorityDropdown');
 const seniorityOptions = document.getElementById('seniorityOptions');
 
+// City multi-select elements
+const citySelectBtn = document.getElementById('citySelectBtn');
+const cityDropdown = document.getElementById('cityDropdown');
+const cityOptions = document.getElementById('cityOptions');
+const citySearchInput = document.getElementById('citySearchInput');
+let selectedCities = [];
+
 // ========== HTML Sanitization ==========
 function esc(str) {
   const div = document.createElement('div');
@@ -172,7 +179,11 @@ function csvRowToPerson(row) {
   if (!nome) return null;
 
   const linkedin = (row[2] || '').trim();
-  const cidade = (row[3] || '').trim();
+  const cidadeRaw = (row[3] || '').trim();
+  // Normalize: "São Paulo / SP" → "São Paulo/SP", "Itajaí, SC" → "Itajaí/SC", "Sorocaba - SP" → "Sorocaba/SP"
+  let cidade = cidadeRaw.replace(/\s*[,\-]\s*/g, '/').replace(/\s*\/\s*/g, '/');
+  // Fix city-only entries: "São Paulo" → "São Paulo/SP"
+  if (cidade && !cidade.includes('/')) cidade += '/SP';
   const modalidade = (row[4] || '').trim();
   const formacao = (row[5] || '').trim();
   const habilidades = parseHabilidades(row[6] || '');
@@ -249,6 +260,7 @@ async function init() {
     filteredData = [...allData];
 
     populateSkillFilter();
+    populateCityFilter();
     renderCards();
     bindEvents();
   } catch (err) {
@@ -275,6 +287,29 @@ function populateSkillFilter() {
     <label class="multi-select-option" data-skill="${esc(skill)}">
       <input type="checkbox" value="${esc(skill)}">
       <span>${esc(skill)}</span>
+      <span style="margin-left:auto;color:var(--gray-400);font-size:0.7rem">${count}</span>
+    </label>
+  `).join('');
+}
+
+// ========== Populate City Filter ==========
+function populateCityFilter() {
+  const cityCount = {};
+  allData.forEach(person => {
+    if (person.cidade) {
+      // Extract just the city name (before the /) for grouping
+      const city = person.cidade;
+      cityCount[city] = (cityCount[city] || 0) + 1;
+    }
+  });
+
+  const sorted = Object.entries(cityCount)
+    .sort((a, b) => b[1] - a[1]);
+
+  cityOptions.innerHTML = sorted.map(([city, count]) => `
+    <label class="multi-select-option" data-city="${esc(city)}">
+      <input type="checkbox" value="${esc(city)}">
+      <span>${esc(city)}</span>
       <span style="margin-left:auto;color:var(--gray-400);font-size:0.7rem">${count}</span>
     </label>
   `).join('');
@@ -429,6 +464,55 @@ function updateSeniorityUI() {
   });
 }
 
+// ========== City Multi-Select Logic ==========
+function toggleCityDropdown() {
+  const isOpen = cityDropdown.classList.contains('open');
+  if (isOpen) {
+    cityDropdown.classList.remove('open');
+    citySelectBtn.classList.remove('active');
+  } else {
+    cityDropdown.classList.add('open');
+    citySelectBtn.classList.add('active');
+  }
+}
+
+function toggleCity(value) {
+  const idx = selectedCities.indexOf(value);
+  if (idx >= 0) {
+    selectedCities.splice(idx, 1);
+  } else {
+    selectedCities.push(value);
+  }
+  updateCityUI();
+  applyFilters();
+}
+
+function updateCityUI() {
+  if (selectedCities.length === 0) {
+    citySelectBtn.querySelector('.multi-select-label').textContent = 'Cidade';
+    citySelectBtn.classList.remove('has-selection');
+  } else {
+    const label = selectedCities.length === 1 ? selectedCities[0] : selectedCities.length + ' cidades';
+    citySelectBtn.querySelector('.multi-select-label').textContent = label;
+    citySelectBtn.classList.add('has-selection');
+  }
+
+  cityOptions.querySelectorAll('.multi-select-option').forEach(opt => {
+    const cb = opt.querySelector('input[type="checkbox"]');
+    const isChecked = selectedCities.includes(cb.value);
+    cb.checked = isChecked;
+    opt.classList.toggle('checked', isChecked);
+  });
+}
+
+function filterCityOptions(query) {
+  const q = query.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  cityOptions.querySelectorAll('.multi-select-option').forEach(opt => {
+    const city = (opt.dataset.city || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    opt.style.display = city.includes(q) ? '' : 'none';
+  });
+}
+
 // ========== Render cards ==========
 function renderCards() {
   if (filteredData.length === 0) {
@@ -535,8 +619,14 @@ function applyFilters() {
 
     if (selectedSeniorities.length > 0) {
       const normalize = str => str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-      const s = normalize(person.senioridade || '');
-      const matchesAny = selectedSeniorities.some(sel => s.includes(normalize(sel)));
+      // Search in both senioridade field AND cargos (for Especialista, Coordenador etc)
+      const combined = normalize((person.senioridade || '') + ' ' + person.cargos.join(' '));
+      const matchesAny = selectedSeniorities.some(sel => combined.includes(normalize(sel)));
+      if (!matchesAny) return false;
+    }
+
+    if (selectedCities.length > 0) {
+      const matchesAny = selectedCities.some(city => person.cidade === city);
       if (!matchesAny) return false;
     }
 
@@ -706,6 +796,26 @@ function bindEvents() {
     }
   });
 
+  // City multi-select events
+  citySelectBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleCityDropdown();
+  });
+
+  citySearchInput.addEventListener('input', (e) => {
+    filterCityOptions(e.target.value);
+  });
+
+  citySearchInput.addEventListener('click', (e) => {
+    e.stopPropagation();
+  });
+
+  cityOptions.addEventListener('change', (e) => {
+    if (e.target.type === 'checkbox') {
+      toggleCity(e.target.value);
+    }
+  });
+
   document.addEventListener('click', (e) => {
     if (!e.target.closest('#skillMultiSelect')) {
       skillDropdown.classList.remove('open');
@@ -719,6 +829,10 @@ function bindEvents() {
       seniorityDropdown.classList.remove('open');
       senioritySelectBtn.classList.remove('active');
     }
+    if (!e.target.closest('#cityMultiSelect')) {
+      cityDropdown.classList.remove('open');
+      citySelectBtn.classList.remove('active');
+    }
   });
 
   filterMode.addEventListener('change', applyFilters);
@@ -729,9 +843,11 @@ function bindEvents() {
     selectedAreas = [];
     selectedSkills = [];
     selectedSeniorities = [];
+    selectedCities = [];
     updateAreaUI();
     updateSkillUI();
     updateSeniorityUI();
+    updateCityUI();
     applyFilters();
   });
 
