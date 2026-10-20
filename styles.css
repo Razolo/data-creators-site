@@ -150,11 +150,24 @@ img { display: block; }
 .stat dd { font-family: var(--font-serif); font-size: 40px; font-weight: 500; line-height: 1; color: var(--sumi); font-variant-numeric: tabular-nums; }
 .stat dt { font-size: 13px; color: var(--stone-2); }
 
-.companies { margin-top: 56px; padding-top: 28px; border-top: 1px solid var(--hairline-soft); display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
-.companies-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--stone-2); }
-.companies-list { list-style: none; display: flex; flex-wrap: wrap; gap: 10px 24px; }
-.companies-list li { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; color: var(--stone-3); }
-.companies-list img { width: 22px; height: 22px; border-radius: 5px; object-fit: contain; filter: grayscale(1); opacity: .75; }
+.companies { margin-top: 48px; padding-top: 32px; border-top: 1px solid var(--hairline-soft); }
+.companies-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--stone-2); margin-bottom: 18px; }
+.co-grid {
+  list-style: none; display: flex; flex-wrap: wrap; justify-content: center;
+  gap: 12px; margin: 0 auto; --cols: 7;
+}
+.co-grid li {
+  flex: 0 0 calc((100% - (var(--cols) - 1) * 12px) / var(--cols));
+  display: flex; align-items: center; justify-content: center;
+  height: 72px; padding: 0 18px;
+  background: var(--card); border: 1px solid var(--hairline-soft); border-radius: 10px;
+}
+.co-logo {
+  max-width: 100%; max-height: 26px; width: auto; height: auto; object-fit: contain;
+  filter: grayscale(1) brightness(.7) contrast(1.3); opacity: .85; transition: filter .2s, opacity .2s;
+}
+.co-logo-sq { max-height: 42px; }
+.co-grid li:hover .co-logo { filter: none; opacity: 1; }
 
 /* ========== Filters ========== */
 .directory { padding-bottom: 96px; }
@@ -394,6 +407,7 @@ img { display: block; }
 @media (max-width: 960px) {
   .hero-grid { grid-template-columns: 1fr; gap: 36px; }
   .cta-inner { flex-direction: column; align-items: flex-start; }
+  .co-grid { --cols: 4; }
 }
 
 @media (max-width: 720px) {
@@ -406,7 +420,12 @@ img { display: block; }
   .hero-actions .btn { flex: 1; }
   .stat { padding: 18px; }
   .stat dd { font-size: 32px; }
-  .companies { margin-top: 36px; gap: 14px; }
+  .companies { margin-top: 36px; }
+  .co-grid { --cols: 3; gap: 8px; }
+  .co-grid li { flex-basis: calc((100% - 16px) / 3); }
+  .co-grid li { height: 64px; padding: 0 10px; }
+  .co-logo { max-height: 22px; }
+  .co-logo-sq { max-height: 36px; }
 
   /* Filters stop being sticky on phones: they would eat half the screen */
   .filters { position: static; backdrop-filter: none; }
