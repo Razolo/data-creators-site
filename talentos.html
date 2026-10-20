@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data Creators | Banco de Talentos em Dados</title>
+  <meta name="description" content="Analistas, engenheiros e cientistas de dados da comunidade Data Creators, profissionais que não se limitam à parte técnica.">
+  <meta name="author" content="Heitor Sasaki - Data Creators">
+  <link rel="canonical" href="https://data-creators-site.vercel.app/talentos">
+
+  <!-- Open Graph (LinkedIn, Facebook, WhatsApp previews) -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Data Creators | Banco de Talentos em Dados">
+  <meta property="og:description" content="Analistas, engenheiros e cientistas de dados da comunidade Data Creators, profissionais que não se limitam à parte técnica.">
+  <meta property="og:image" content="https://data-creators-site.vercel.app/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:url" content="https://data-creators-site.vercel.app/talentos">
+  <meta property="og:site_name" content="Data Creators">
+  <meta property="og:locale" content="pt_BR">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Data Creators | Banco de Talentos em Dados">
+  <meta name="twitter:description" content="Analistas, engenheiros e cientistas de dados da comunidade Data Creators, profissionais que não se limitam à parte técnica.">
+  <meta name="twitter:image" content="https://data-creators-site.vercel.app/og-image.png">
+
+  <link rel="icon" type="image/png" href="/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+JP:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+  <a href="/" class="topbar">
+    <span>Profissional de dados? <strong>Conheça a Data Creators, a comunidade por trás destes perfis →</strong></span>
+  </a>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="container header-inner">
+      <a href="/" class="logo-area" aria-label="Data Creators, início">
+        <img src="/logo.png" alt="" class="logo-img" width="36" height="36">
+        <span class="logo-text">DATA CREATORS</span>
+      </a>
+      <nav class="header-nav" aria-label="Principal">
+        <a href="/" class="nav-link">A comunidade</a>
+        <a href="#talentos" class="nav-link">Talentos</a>
+        <a href="https://www.linkedin.com/in/heitorsasaki/" class="btn btn-primary btn-sm" target="_blank" rel="noopener">
+          <svg class="icon" aria-hidden="true"><use href="#i-in"/></svg>
+          Falar com Heitor
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero -->
+    <section class="hero">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <p class="kicker">Banco de talentos · Data Creators</p>
+          <h1 class="hero-title">Profissionais de dados que não se limitam à parte técnica</h1>
+          <p class="hero-desc">Conheça analistas, engenheiros e cientistas de dados da Data Creators, uma comunidade com mais de 200 profissionais que sabem qual problema resolver antes de escolher a ferramenta.</p>
+          <div class="hero-actions">
+            <a href="#talentos" class="btn btn-primary">Ver profissionais</a>
+          </div>
+        </div>
+        <dl class="hero-stats" id="heroStats">
+          <div class="stat"><dd data-stat="total">·</dd><dt>perfis disponíveis</dt></div>
+          <div class="stat"><dd data-stat="imediata">·</dd><dt>com início imediato</dt></div>
+          <div class="stat"><dd data-stat="areas">·</dd><dt>áreas de atuação</dt></div>
+          <div class="stat"><dd data-stat="cidades">·</dd><dt>cidades</dt></div>
+        </dl>
+      </div>
+      <div class="container companies">
+        <p class="companies-label">Membros da comunidade trabalham em</p>
+        <ul class="companies-list">
+          <li><img src="/logos/ifood.png" alt="" width="22" height="22"><span>iFood</span></li>
+          <li><img src="/logos/nubank.png" alt="" width="22" height="22"><span>Nubank</span></li>
+          <li><img src="/logos/mercadolivre.png" alt="" width="22" height="22"><span>Mercado Livre</span></li>
+          <li><img src="/logos/itau.png" alt="" width="22" height="22"><span>Itaú</span></li>
+          <li><img src="/logos/shopee.png" alt="" width="22" height="22"><span>Shopee</span></li>
+          <li><img src="/logos/boticario.png" alt="" width="22" height="22"><span>Boticário</span></li>
+          <li><img src="/logos/nttdata.png" alt="" width="22" height="22"><span>NTT Data</span></li>
+        </ul>
+      </div>
+    </section>
+
+
+    <!-- Directory -->
+    <section class="directory" id="talentos">
+      <div class="filters" id="filters">
+        <div class="container">
+          <div class="filters-top">
+            <label class="search-box">
+              <svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>
+              <span class="sr-only">Buscar</span>
+              <input type="search" id="searchInput" placeholder="Buscar por nome, ferramenta, setor, cidade..." autocomplete="off">
+            </label>
+            <label class="sort-box">
+              <span class="sr-only">Ordenar</span>
+              <select id="sortSelect">
+                <option value="relevancia">Mais experientes primeiro</option>
+                <option value="inicio">Início mais rápido</option>
+                <option value="nome">Nome A-Z</option>
+              </select>
+              <svg class="icon" aria-hidden="true"><use href="#i-chev"/></svg>
+            </label>
+          </div>
+          <div class="chips-row" id="areaChips" role="group" aria-label="Área"></div>
+          <div class="filters-row">
+            <div class="ms" data-ms="seniority"></div>
+            <div class="ms" data-ms="city"></div>
+            <div class="ms" data-ms="skill"></div>
+            <div class="ms" data-ms="mode"></div>
+            <button type="button" class="chip chip-toggle" id="immediateToggle" aria-pressed="false">
+              <span class="dot dot-green"></span> Início imediato
+            </button>
+            <button type="button" class="btn-link" id="clearFilters" hidden>Limpar filtros</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="container">
+        <p class="results-count"><strong id="resultsCount">0</strong> <span id="resultsLabel">perfis</span></p>
+        <div class="cards-grid" id="cardsGrid"></div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta" id="contato">
+      <div class="container cta-inner">
+        <div>
+          <h2 class="cta-title">Não encontrou o perfil que procura?</h2>
+          <p class="cta-desc">Nem todos os membros da comunidade estão listados aqui. Se você precisa de outro tipo de indicação, fale diretamente com Heitor Sasaki.</p>
+        </div>
+        <a href="https://www.linkedin.com/in/heitorsasaki/" class="btn btn-light" target="_blank" rel="noopener">
+          <svg class="icon" aria-hidden="true"><use href="#i-in"/></svg>
+          Falar com Heitor no LinkedIn
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-join">
+        <p class="footer-join-title">Profissional de dados e quer fazer parte da Data Creators?</p>
+        <a href="/" class="footer-link-strong">Conhecer a Data Creators →</a>
+      </div>
+      <div class="footer-links">
+        <a href="https://www.linkedin.com/in/heitorsasaki/" target="_blank" rel="noopener">LinkedIn</a>
+        <a href="https://www.instagram.com/sasakiheitor" target="_blank" rel="noopener">Instagram</a>
+        <a href="https://heitorsasaki.substack.com" target="_blank" rel="noopener">Newsletter</a>
+      </div>
+      <p class="footer-copy">© <span id="year"></span> Data Creators · Heitor Sasaki</p>
+    </div>
+  </footer>
+
+  <!-- Shortlist bar -->
+  <div class="shortlist-bar" id="shortlistBar" hidden>
+    <ul class="shortlist-list" id="shortlistList" hidden></ul>
+    <div class="shortlist-inner">
+      <button type="button" class="shortlist-names" id="shortlistToggle" aria-expanded="false" aria-controls="shortlistList">
+        <strong id="shortlistCount">0</strong> <span id="shortlistLabel">perfil na lista</span>
+        <svg class="icon" aria-hidden="true"><use href="#i-chev"/></svg>
+      </button>
+      <div class="shortlist-actions">
+        <button type="button" class="btn-link btn-link-light" id="shortlistClear">Limpar</button>
+        <a href="https://www.linkedin.com/in/heitorsasaki/" class="btn btn-li" id="shortlistSend" target="_blank" rel="noopener">
+          <svg class="icon" aria-hidden="true"><use href="#i-in"/></svg>
+          Solicitar indicação
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile modal -->
+  <div class="modal-overlay" id="modalOverlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalName">
+      <button type="button" class="modal-close" id="modalClose" aria-label="Fechar">
+        <svg class="icon" aria-hidden="true"><use href="#i-x"/></svg>
+      </button>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" hidden></div>
+
+  <!-- Icons -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></symbol>
+    <symbol id="i-ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14 21 3"/></symbol>
+    <symbol id="i-in" viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.640-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.130zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z"/></symbol>
+  </svg>
+
+  <script src="/script.js"></script>
+</body>
+</html>

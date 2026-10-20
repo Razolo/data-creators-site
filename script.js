@@ -402,7 +402,7 @@ async function fetchRows() {
   } catch (err) {
     console.warn('Google Sheets fetch failed, falling back to data.json:', err.message);
   }
-  const res = await fetch('./data.json');
+  const res = await fetch('/data.json');
   return res.json();
 }
 
@@ -698,7 +698,7 @@ function renderShortlist() {
 
 // ========== Indication request (LinkedIn) ==========
 function profileUrl(p) {
-  return `${SITE_URL}#perfil/${p.slug}`;
+  return `${SITE_URL}talentos#perfil/${p.slug}`;
 }
 
 function personLine(p) {

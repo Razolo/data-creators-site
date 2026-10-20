@@ -3,201 +3,337 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Data Creators | Banco de Talentos em Dados</title>
-  <meta name="description" content="Analistas, engenheiros e cientistas de dados da comunidade Data Creators, profissionais que não se limitam à parte técnica.">
-  <meta name="author" content="Heitor Sasaki - Data Creators">
+  <title>Data Creators | Comunidade de carreira em dados</title>
+  <meta name="description" content="O problema raramente é técnico. A Data Creators é uma comunidade de 200+ profissionais de dados com vagas e indicações toda semana.">
+  <meta name="author" content="Heitor Sasaki">
   <link rel="canonical" href="https://data-creators-site.vercel.app/">
 
-  <!-- Open Graph (LinkedIn, Facebook, WhatsApp previews) -->
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Data Creators | Banco de Talentos em Dados">
-  <meta property="og:description" content="Analistas, engenheiros e cientistas de dados da comunidade Data Creators, profissionais que não se limitam à parte técnica.">
+  <meta property="og:title" content="Data Creators | O problema raramente é técnico">
+  <meta property="og:description" content="Comunidade de 200+ profissionais de dados com vagas e indicações toda semana.">
   <meta property="og:image" content="https://data-creators-site.vercel.app/og-image.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:url" content="https://data-creators-site.vercel.app/">
   <meta property="og:site_name" content="Data Creators">
   <meta property="og:locale" content="pt_BR">
-
-  <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Data Creators | Banco de Talentos em Dados">
-  <meta name="twitter:description" content="Analistas, engenheiros e cientistas de dados da comunidade Data Creators, profissionais que não se limitam à parte técnica.">
+  <meta name="twitter:title" content="Data Creators | O problema raramente é técnico">
+  <meta name="twitter:description" content="Comunidade de 200+ profissionais de dados com vagas e indicações toda semana.">
   <meta name="twitter:image" content="https://data-creators-site.vercel.app/og-image.png">
 
-  <link rel="icon" type="image/png" href="logo.png">
+  <script>
+    // Profile links shared before the talent page moved to /talentos
+    if (location.hash.indexOf('#perfil/') === 0) location.replace('/talentos' + location.hash);
+  </script>
+
+  <link rel="icon" type="image/png" href="/logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+JP:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="/landing.css">
 </head>
 <body>
 
-  <!-- Header -->
+  <a href="/talentos" class="topbar">
+    <span>Recrutador ou gestor? <strong>Conhece o banco de talentos da DC →</strong></span>
+  </a>
+
   <header class="header">
     <div class="container header-inner">
       <a href="/" class="logo-area" aria-label="Data Creators, início">
-        <img src="logo.png" alt="" class="logo-img" width="36" height="36">
+        <img src="/logo.png" alt="" class="logo-img" width="36" height="36">
         <span class="logo-text">DATA CREATORS</span>
       </a>
       <nav class="header-nav" aria-label="Principal">
-        <a href="#talentos" class="nav-link">Talentos</a>
-        <a href="https://www.linkedin.com/in/heitorsasaki/" class="btn btn-primary btn-sm" target="_blank" rel="noopener">
-          <svg class="icon" aria-hidden="true"><use href="#i-in"/></svg>
-          Falar com Heitor
-        </a>
+        <a href="#dentro" class="nav-link">Lá dentro</a>
+        <a href="#mensagens" class="nav-link">Mensagens</a>
+        <a href="#investimento" class="nav-link">Investimento</a>
+        <a href="/talentos" class="nav-link nav-link-muted">Para empresas</a>
+        <a href="#entrar" class="btn btn-primary btn-sm">Quero entrar</a>
       </nav>
     </div>
   </header>
 
   <main>
-    <!-- Hero -->
+    <!-- 1. Hero -->
     <section class="hero">
       <div class="container hero-grid">
         <div class="hero-copy">
-          <p class="kicker">Banco de talentos · Data Creators</p>
-          <h1 class="hero-title">Profissionais de dados que não se limitam à parte técnica</h1>
-          <p class="hero-desc">Conheça analistas, engenheiros e cientistas de dados da Data Creators, uma comunidade com mais de 180 profissionais que sabem qual problema resolver antes de escolher a ferramenta.</p>
+          <p class="kicker">Data Creators</p>
+          <h1 class="hero-title">O problema raramente é técnico</h1>
+          <p class="hero-lead">Tu sabes rodar query, montar dashboard e apresentar resultado, isso tu aprendeste faz tempo. Só que a carreira travou num lugar estranho, tu entregas bem, resolves problema, e a promoção não vem, ou vem pra outra pessoa.</p>
+          <p class="hero-lead">Quase sempre que eu vejo isso acontecer, a pessoa tá cercada da gente errada e contando a história errada sobre ela mesma.</p>
           <div class="hero-actions">
-            <a href="#talentos" class="btn btn-primary">Ver profissionais</a>
+            <a href="#entrar" class="btn btn-primary">Quero entrar na DC</a>
+            <a href="#dentro" class="btn btn-ghost">Ver o que acontece lá dentro ↓</a>
           </div>
         </div>
-        <dl class="hero-stats" id="heroStats">
-          <div class="stat"><dd data-stat="total">·</dd><dt>perfis disponíveis</dt></div>
-          <div class="stat"><dd data-stat="imediata">·</dd><dt>com início imediato</dt></div>
-          <div class="stat"><dd data-stat="areas">·</dd><dt>áreas de atuação</dt></div>
-          <div class="stat"><dd data-stat="cidades">·</dd><dt>cidades</dt></div>
-        </dl>
-      </div>
-      <div class="container companies">
-        <p class="companies-label">Membros da comunidade trabalham em</p>
-        <ul class="companies-list">
-          <li><img src="logos/ifood.png" alt="" width="22" height="22"><span>iFood</span></li>
-          <li><img src="logos/nubank.png" alt="" width="22" height="22"><span>Nubank</span></li>
-          <li><img src="logos/mercadolivre.png" alt="" width="22" height="22"><span>Mercado Livre</span></li>
-          <li><img src="logos/itau.png" alt="" width="22" height="22"><span>Itaú</span></li>
-          <li><img src="logos/shopee.png" alt="" width="22" height="22"><span>Shopee</span></li>
-          <li><img src="logos/boticario.png" alt="" width="22" height="22"><span>Boticário</span></li>
-          <li><img src="logos/nttdata.png" alt="" width="22" height="22"><span>NTT Data</span></li>
-        </ul>
+
+        <div class="phone" aria-label="Mensagens reais do grupo">
+          <div class="phone-top">
+            <img src="/logo.png" alt="" width="32" height="32">
+            <div>
+              <p class="phone-title">Data Creators</p>
+              <p class="phone-sub">200+ participantes</p>
+            </div>
+          </div>
+          <div class="phone-body">
+            <div class="bubble"><span class="who">DC</span>Eu consegui graças ao DC!</div>
+            <div class="bubble"><span class="who">DC</span>tira o print aí</div>
+            <div class="bubble"><span class="who">DC</span>E funciona! Acabei de entrar lá na indicação da [DC]</div>
+            <div class="bubble"><span class="who">DC</span>aquela entrevista que fiz na semana passada, passei!</div>
+          </div>
+        </div>
       </div>
     </section>
 
-
-    <!-- Directory -->
-    <section class="directory" id="talentos">
-      <div class="filters" id="filters">
-        <div class="container">
-          <div class="filters-top">
-            <label class="search-box">
-              <svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>
-              <span class="sr-only">Buscar</span>
-              <input type="search" id="searchInput" placeholder="Buscar por nome, ferramenta, setor, cidade..." autocomplete="off">
-            </label>
-            <label class="sort-box">
-              <span class="sr-only">Ordenar</span>
-              <select id="sortSelect">
-                <option value="relevancia">Mais experientes primeiro</option>
-                <option value="inicio">Início mais rápido</option>
-                <option value="nome">Nome A-Z</option>
-              </select>
-              <svg class="icon" aria-hidden="true"><use href="#i-chev"/></svg>
-            </label>
-          </div>
-          <div class="chips-row" id="areaChips" role="group" aria-label="Área"></div>
-          <div class="filters-row">
-            <div class="ms" data-ms="seniority"></div>
-            <div class="ms" data-ms="city"></div>
-            <div class="ms" data-ms="skill"></div>
-            <div class="ms" data-ms="mode"></div>
-            <button type="button" class="chip chip-toggle" id="immediateToggle" aria-pressed="false">
-              <span class="dot dot-green"></span> Início imediato
-            </button>
-            <button type="button" class="btn-link" id="clearFilters" hidden>Limpar filtros</button>
-          </div>
-        </div>
-      </div>
-
+    <!-- 2. Companies -->
+    <section class="companies">
       <div class="container">
-        <p class="results-count"><strong id="resultsCount">0</strong> <span id="resultsLabel">perfis</span></p>
-        <div class="cards-grid" id="cardsGrid"></div>
+        <p class="companies-text">Tem DC na <strong>3M, Itaú, Nubank, iFood, XP, Nestlé, J&amp;J, QuintoAndar, Boticário, Kenvue e Raízen</strong>, e gente trabalhando da Holanda, Alemanha, EUA, Canadá e Irlanda.</p>
       </div>
     </section>
 
-    <!-- CTA -->
-    <section class="cta" id="contato">
-      <div class="container cta-inner">
-        <div>
-          <h2 class="cta-title">Não encontrou o perfil que procura?</h2>
-          <p class="cta-desc">Nem todos os membros da comunidade estão listados aqui. Se você precisa de outro tipo de indicação, fale diretamente com Heitor Sasaki.</p>
+    <!-- 3. Numbers -->
+    <section class="numbers">
+      <div class="container">
+        <p class="kicker kicker-light">Setembro no grupo</p>
+        <dl class="numbers-grid">
+          <div><dd>200+</dd><dt>profissionais de dados na comunidade</dt></div>
+          <div><dd><small>umas</small> 150</dd><dt>vagas postadas no grupo de vagas</dt></div>
+          <div><dd><small>umas</small> 40</dd><dt>com alguém de dentro da empresa pra indicar</dt></div>
+          <div><dd>13.776</dd><dt>mensagens no grupo principal, com conversa em todos os dias do mês</dt></div>
+        </dl>
+        <p class="numbers-note">Esses números saíram do export do WhatsApp de setembro. A maior parte das vagas nem passa por mim, é DC repassando vaga do próprio time ou recrutador que chamou alguém de nós e a pessoa mandou pro grupo.</p>
+      </div>
+    </section>
+
+    <!-- 4. Inside -->
+    <section class="inside" id="dentro">
+      <div class="container">
+        <h2 class="section-title">O que acontece lá dentro</h2>
+
+        <article class="block">
+          <div class="block-text">
+            <span class="block-num">01</span>
+            <h3>Vaga e indicação toda semana</h3>
+            <p>Eu procuro vaga ativamente e posto no grupo. Quando um DC muda de empresa e o time dele abre vaga, ele avisa e indica outro DC, e quando um recrutador manda mensagem pra um de nós com uma vaga que não serve pra ele, a vaga vai pro grupo.</p>
+            <p>Em setembro um DC foi demitido às 20h35. Às 21h29 já tinha outro DC oferecendo indicação na empresa dele, e no fim do mês ele foi chamado pra entrevista.</p>
+            <p class="muted">Nem toda indicação vira contratação, teve indicação que parou na entrevista. E muita vaga presencial em São Paulo ficou parada porque ninguém quis.</p>
+          </div>
+          <div class="block-quote">
+            <div class="bubble bubble-lg"><span class="who">DC</span>Já consegui trazer uma indicação aqui pra firma e tenho outra em PS, a guria do RH que toca isso confia nas minhas indicações rs</div>
+          </div>
+        </article>
+
+        <article class="block">
+          <div class="block-text">
+            <span class="block-num">02</span>
+            <h3>Uma conversa comigo quando tu entras</h3>
+            <p>Quando tu entras, a gente marca uma call pra eu entender onde tu estás e onde queres chegar, e daí sai um plano pro teu caso. Depois disso, sempre que tu precisares de ajuda com alguma decisão, é só me chamar que a gente conversa.</p>
+          </div>
+          <div class="block-quote block-quote-card">
+            <img src="/logo.png" alt="" width="48" height="48">
+            <p class="card-name">Heitor Sasaki</p>
+            <p class="card-sub">Call inicial + conversa sempre que precisares</p>
+          </div>
+        </article>
+
+        <article class="block">
+          <div class="block-text">
+            <span class="block-num">03</span>
+            <h3>Prompts de IA pra reposicionar a tua carreira</h3>
+            <p>Eu montei prompts pra cada etapa, cada um com mais de 20 páginas. Eles fazem o que eu faria se sentasse contigo uma hora, pegam o que tu já tens de bom e organizam numa história que mostra senioridade.</p>
+            <p>Um DC tentava entrar no mercado de fora fazia meses. Usou o prompt de reposicionamento e reescreveu o CV inteiro numa tarde. Na semana seguinte veio o primeiro retorno, e hoje ele trabalha no Canadá. O prompt não inventou nada, só organizou o que ele já tinha de um jeito que recrutador de fora consegue ler.</p>
+          </div>
+          <div class="block-quote">
+            <ul class="prompt-list">
+              <li>LinkedIn</li>
+              <li>CV que passa no ATS</li>
+              <li>Preparação pra entrevista e pro case de negócio</li>
+              <li>Requisitos fantasmas da vaga</li>
+              <li>Experiência traduzida pro mercado internacional</li>
+              <li>Escrever na rede</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="block">
+          <div class="block-text">
+            <span class="block-num">04</span>
+            <h3>Um grupo que conversa todo dia</h3>
+            <p>Tu estás em dúvida se aceita uma proposta, se muda de empresa, se vale fazer aquela pós, se o teu gestor tá sendo razoável ou se tu tás engolindo sapo. Manda no grupo, e em uns 20 minutos tem três, quatro pessoas que já passaram por isso te respondendo.</p>
+            <p>Teve DC negociando proposta ao vivo com o grupo em setembro. Levou os argumentos que a galera sugeriu e saiu de três dias presenciais pra um.</p>
+            <p>E tem muita conversa que não é de trabalho, de gato, de setup de home office, de jogo antigo. Pra boa parte da galera, que trabalha sozinha em casa o dia inteiro, o grupo virou o escritório que eles não têm mais. Eu tô lá todo dia.</p>
+          </div>
+          <div class="block-quote">
+            <div class="bubble bubble-lg"><span class="who">DC</span>Boaa, consegui flexibilizar 1x por semana presencial</div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- 5. Wall -->
+    <section class="wall" id="mensagens">
+      <div class="container">
+        <h2 class="section-title">Do WhatsApp da DC</h2>
+        <p class="section-sub">Mensagens reais do grupo. Tirei o nome das pessoas e das empresas, porque o grupo é fechado.</p>
+        <div class="wall-grid">
+          <div class="bubble-stack">
+            <div class="bubble"><span class="who">DC</span>Eu consegui graças ao DC!</div>
+            <div class="bubble">tira o print aí</div>
+          </div>
+          <div class="bubble"><span class="who">DC</span>E funciona! Acabei de entrar lá na indicação da [DC]</div>
+          <div class="bubble"><span class="who">DC</span>e a vaga que eu to é indicação do DC viu?</div>
+          <div class="bubble"><span class="who">DC</span>so nao comento no post do linkedin que tenho uma entrevista essa semana por indicação do DC, pq ne? se nao der certo, ainda preciso do emprego que estou agora rs</div>
+          <div class="bubble"><span class="who">DC</span>Voltando pra rotina de pedreiro de dados, fui contratado família, Eng de Dados na [empresa].</div>
+          <div class="bubble"><span class="who">DC</span>Bom diaaa!!! Fui promovida ✨ a partir de setembro serei especialista 😄 feliz</div>
+          <div class="bubble"><span class="who">DC</span>aquela entrevista que fiz na semana passada, passei!</div>
+          <div class="bubble"><span class="who">DC</span>DC se provando o melhor grupo dia após dia hahaha</div>
+          <div class="bubble"><span class="who">DC</span>Eu amo esse grupo pq conseguimos falar de um milhão de coisas ao mesmo tempo kkkkkkkkkkkkk e ninguém fica ofendido</div>
+          <div class="bubble"><span class="who">DC</span>eu simplesmente nunca pude abrir meu lado espiritual/esotérico pq não queria ser descredibilizada, galera de dados sempre zoou muito religião e nunca senti abertura. to muito feliz de descobrir que aqui é um espaço seguro e que posso ser euzinha.</div>
         </div>
-        <a href="https://www.linkedin.com/in/heitorsasaki/" class="btn btn-light" target="_blank" rel="noopener">
-          <svg class="icon" aria-hidden="true"><use href="#i-in"/></svg>
-          Falar com Heitor no LinkedIn
-        </a>
+      </div>
+    </section>
+
+    <!-- 6. Path -->
+    <section class="path">
+      <div class="container">
+        <h2 class="section-title">O que costuma acontecer depois que alguém entra</h2>
+        <ol class="timeline">
+          <li>
+            <p class="timeline-when">Primeiros 30 dias</p>
+            <p>A pessoa mais lê do que fala. Entra no grupo, acompanha as conversas, assiste as calls gravadas e percebe que tem gente com o mesmo problema que ela, e que a solução já existia em outro lugar.</p>
+          </li>
+          <li>
+            <p class="timeline-when">Entre 2 e 3 meses</p>
+            <p>Começa a agir. Refaz o CV, muda o LinkedIn, se posiciona diferente na entrevista, e as vagas do grupo começam a fazer sentido porque agora ela sabe o que procurar.</p>
+          </li>
+          <li>
+            <p class="timeline-when">Depois de 6 meses</p>
+            <p>Quem entrou inseguro sobre o próprio nível já tá respondendo dúvida dos mais novos e já indicou alguém pra vaga.</p>
+          </li>
+        </ol>
+
+        <h3 class="sub-title">Uns casos de quem tá lá dentro</h3>
+        <div class="cases">
+          <p>Um DC veio da física, sem experiência formal em dados, achou a primeira oportunidade pela rede do grupo e hoje é cientista de dados.</p>
+          <p>Um DC entrou como júnior, foi em todas as calls, usou os prompts pra se reposicionar e hoje é especialista. Levou dois anos.</p>
+          <p>Um DC já trocou de empresa três vezes desde que entrou. Virou piada interna, toda vez que ele aparece com "pessoal, tenho uma novidade..." a galera já sabe.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7 + 8. Who / what you get -->
+    <section class="fit">
+      <div class="container fit-grid">
+        <div>
+          <h2 class="section-title">Pra quem é</h2>
+          <p class="fit-lead">A DC é pra quem já trabalha com dados, ou tem estrada em outra área e tá migrando, e agora precisa de uma rede que gere oportunidade de verdade, de gente com estrada pra discutir decisão de carreira e de alguém que ajude a contar a tua história de um jeito que mostre o que tu vales.</p>
+          <p class="fit-not">Se tu procuras curso de SQL ou Python, a DC não é pra ti, tem material ótimo e de graça na internet pra isso.</p>
+        </div>
+        <div class="get">
+          <h2 class="section-title">O que tu recebes</h2>
+          <ul class="checklist">
+            <li>Acesso vitalício à comunidade no WhatsApp</li>
+            <li>Vagas e indicações toda semana</li>
+            <li>Prompts de IA pra LinkedIn, CV, entrevista, case de negócio e mercado internacional</li>
+            <li>Uma call comigo quando tu entras, pra alinhar onde tu estás e onde queres chegar</li>
+            <li>Conversa comigo sempre que precisares de ajuda</li>
+            <li>Biblioteca com calls gravadas e templates</li>
+            <li>Acesso à rede de profissionais na 3M, Itaú, Nubank, iFood, XP, Nestlé, J&amp;J e dezenas de outras empresas</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 9. Price -->
+    <section class="price" id="investimento">
+      <div class="container price-grid">
+        <div class="price-card">
+          <p class="kicker">Investimento</p>
+          <p class="price-value"><span>R$</span> 2.500 <small>no Pix</small></p>
+          <p class="price-detail">Pagamento único, acesso vitalício. No cartão, a partir de R$ 2.700.</p>
+          <p class="price-detail">Tu pagas uma vez e continuas dentro enquanto quiseres, com as vagas, o grupo e as conversas comigo.</p>
+          <a href="#entrar" class="btn btn-primary btn-block">Quero entrar na DC</a>
+        </div>
+        <div class="price-terms">
+          <div>
+            <h3>Garantia de 7 dias</h3>
+            <p>Se não gostares, eu peço desculpa e devolvo teu dinheiro. Só que aí não dá pra voltar por um ano.</p>
+          </div>
+          <div>
+            <h3>Sem garantia de resultado</h3>
+            <p>Eu não tenho como te prometer vaga X em Y meses, porque isso depende do que tu sabes fazer e do quanto tu te comprometes. O que eu faço é te mostrar o que eu faria no teu lugar, te conectar com quem já fez o caminho e te dar as ferramentas pra encurtar o processo.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 10. FAQ -->
+    <section class="faq">
+      <div class="container faq-inner">
+        <h2 class="section-title">Perguntas</h2>
+        <details>
+          <summary>Preciso ser sênior pra entrar?</summary>
+          <p>Não. A maior parte do grupo é pleno e sênior, tem especialista e coordenador, e tem bastante gente que veio de outra área com anos de estrada, de contabilidade, arquitetura, publicidade, RH. Quem ainda tá aprendendo SQL vai aproveitar pouco.</p>
+        </details>
+        <details>
+          <summary>É um curso?</summary>
+          <p>Tem calls gravadas e templates, mas ninguém tá seguindo trilha de estudo lá dentro. A galera trabalha e traz pro grupo o que tá acontecendo no trabalho.</p>
+        </details>
+        <details>
+          <summary>Como funcionam as indicações?</summary>
+          <p>As vagas vão pro grupo de vagas, umas postadas por mim e a maioria por DCs repassando vaga do próprio time. Quando tem DC dentro da empresa, ele se oferece pra indicar. A entrevista continua sendo contigo.</p>
+        </details>
+        <details>
+          <summary>Funciona pra quem quer trabalhar fora?</summary>
+          <p>Tem DC na Holanda, Alemanha, EUA, Canadá e Irlanda, e tem prompt específico pra traduzir a tua experiência pro mercado de fora. O que mais trava gente boa nessas vagas ainda é inglês fluente.</p>
+        </details>
+      </div>
+    </section>
+
+    <!-- 11. CTA -->
+    <section class="cta" id="entrar">
+      <div class="container cta-inner">
+        <h2 class="cta-title">Como entrar</h2>
+        <p class="cta-desc">Me manda uma mensagem no Instagram ou no LinkedIn dizendo que tu tens interesse. A gente faz a inscrição, eu te dou as boas-vindas e marcamos uma call pra montar um plano pro teu caso.</p>
+        <div class="cta-actions">
+          <a href="https://ig.me/m/sasakiheitor" target="_blank" rel="noopener" class="btn btn-light">
+            <svg class="icon" aria-hidden="true"><use href="#i-ig"/></svg>
+            Mandar mensagem no Instagram
+          </a>
+          <a href="https://www.linkedin.com/in/heitorsasaki/" target="_blank" rel="noopener" class="btn btn-outline-light">
+            <svg class="icon" aria-hidden="true"><use href="#i-in"/></svg>
+            Mandar mensagem no LinkedIn
+          </a>
+        </div>
+        <p class="cta-note">Os resultados da galera eu posto no meu Instagram, <a href="https://www.instagram.com/sasakiheitor" target="_blank" rel="noopener">@sasakiheitor</a>.</p>
       </div>
     </section>
   </main>
 
-  <!-- Footer -->
   <footer class="footer">
     <div class="container footer-inner">
-      <div class="footer-join">
-        <p class="footer-join-title">Profissional de dados e quer fazer parte da Data Creators?</p>
-        <a href="https://docs.google.com/document/d/1w3xFRuhe2FXNu6-ywmR1xKovFarcpYksNpAmgTcHe-s/edit?usp=sharing" target="_blank" rel="noopener" class="footer-link-strong">Ler o documento do programa →</a>
+      <div>
+        <p class="footer-muted">Recrutador ou gestor?</p>
+        <a href="/talentos" class="footer-strong">Conhece o banco de talentos da DC →</a>
       </div>
       <div class="footer-links">
         <a href="https://www.linkedin.com/in/heitorsasaki/" target="_blank" rel="noopener">LinkedIn</a>
         <a href="https://www.instagram.com/sasakiheitor" target="_blank" rel="noopener">Instagram</a>
         <a href="https://heitorsasaki.substack.com" target="_blank" rel="noopener">Newsletter</a>
       </div>
-      <p class="footer-copy">© <span id="year"></span> Data Creators · Heitor Sasaki</p>
+      <p class="footer-copy">© <span id="year">2026</span> Data Creators · Heitor Sasaki</p>
     </div>
   </footer>
 
-  <!-- Shortlist bar -->
-  <div class="shortlist-bar" id="shortlistBar" hidden>
-    <ul class="shortlist-list" id="shortlistList" hidden></ul>
-    <div class="shortlist-inner">
-      <button type="button" class="shortlist-names" id="shortlistToggle" aria-expanded="false" aria-controls="shortlistList">
-        <strong id="shortlistCount">0</strong> <span id="shortlistLabel">perfil na lista</span>
-        <svg class="icon" aria-hidden="true"><use href="#i-chev"/></svg>
-      </button>
-      <div class="shortlist-actions">
-        <button type="button" class="btn-link btn-link-light" id="shortlistClear">Limpar</button>
-        <a href="https://www.linkedin.com/in/heitorsasaki/" class="btn btn-li" id="shortlistSend" target="_blank" rel="noopener">
-          <svg class="icon" aria-hidden="true"><use href="#i-in"/></svg>
-          Solicitar indicação
-        </a>
-      </div>
-    </div>
-  </div>
-
-  <!-- Profile modal -->
-  <div class="modal-overlay" id="modalOverlay" hidden>
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalName">
-      <button type="button" class="modal-close" id="modalClose" aria-label="Fechar">
-        <svg class="icon" aria-hidden="true"><use href="#i-x"/></svg>
-      </button>
-      <div id="modalContent"></div>
-    </div>
-  </div>
-
-  <div class="toast" id="toast" role="status" hidden></div>
-
-  <!-- Icons -->
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-    <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
-    <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></symbol>
-    <symbol id="i-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></symbol>
-    <symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></symbol>
-    <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></symbol>
-    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
-    <symbol id="i-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></symbol>
-    <symbol id="i-ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14 21 3"/></symbol>
-    <symbol id="i-in" viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.640-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.130zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z"/></symbol>
+    <symbol id="i-in" viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z"/></symbol>
+    <symbol id="i-ig" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.6" fill="currentColor"/></symbol>
   </svg>
 
-  <script src="script.js"></script>
+  <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
 </body>
 </html>
