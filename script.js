@@ -1,55 +1,130 @@
 // ========================================
-// Data Creators - Main Script
+// Data Creators - Banco de Talentos
 // Google Sheets live data + JSON fallback
 // ========================================
 
 const SHEETS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRlL30U3GNC8XDriVPwmUjbLlClozuWISNq7winR0b_sU4G3WyT7LAf_fukQzGMAoNUbIPJ3_HMM9a_/pub?output=csv';
 
-let allData = [];
-let filteredData = [];
-let selectedSkills = [];
-let selectedSeniorities = [];
-let selectedAreas = [];
+// LinkedIn can't prefill a message, so "Solicitar indicação" copies it and opens the profile
+const LINKEDIN_URL = 'https://www.linkedin.com/in/heitorsasaki/';
 
-// DOM elements
-const searchInput = document.getElementById('searchInput');
-const filterMode = document.getElementById('filterMode');
-const clearFilters = document.getElementById('clearFilters');
-const cardsGrid = document.getElementById('cardsGrid');
-const resultsCount = document.getElementById('resultsCount');
-const modalOverlay = document.getElementById('modalOverlay');
-const modalContent = document.getElementById('modalContent');
-const modalClose = document.getElementById('modalClose');
+const SITE_URL = 'https://data-creators-site.vercel.app/';
+const SHORTLIST_KEY = 'dc-shortlist';
 
-// Skill multi-select elements
-const skillSelectBtn = document.getElementById('skillSelectBtn');
-const skillDropdown = document.getElementById('skillDropdown');
-const skillOptions = document.getElementById('skillOptions');
-const skillSearchInput = document.getElementById('skillSearchInput');
-const selectedSkillsTags = document.getElementById('selectedSkillsTags');
+// ========== Taxonomies ==========
+const AREAS = [
+  { key: 'analise', label: 'Análise de Dados', re: /analista|analyst|analise de dados/ },
+  { key: 'engenharia', label: 'Engenharia de Dados', re: /engenheir[oa] de dados|engenharia de dados|data engineer/ },
+  { key: 'ae', label: 'Analytics Engineering', re: /analytics engineer|engenheir[oa] de analytics/ },
+  { key: 'ciencia', label: 'Ciência de Dados e IA', re: /cientista|ciencia de dados|data scien|machine learning|engenheir[oa] de (ml|ia)|\bml\b/ },
+  { key: 'bi', label: 'BI', re: /\bbi\b|business intelligence/ },
+  { key: 'negocios', label: 'Negócios e Finanças', re: /negocio|business analyst|fp&a|pricing|financeir|economista|revops|growth|crm|mercado|marketing/ },
+  { key: 'governanca', label: 'Governança e Qualidade', re: /governanca|data quality|qualidade de dados/ },
+  { key: 'lideranca', label: 'Liderança', re: /coordena|gestor|gerente|tech lead|head/ },
+];
 
-// Area multi-select elements
-const areaSelectBtn = document.getElementById('areaSelectBtn');
-const areaDropdown = document.getElementById('areaDropdown');
-const areaOptions = document.getElementById('areaOptions');
+// rank: used for sorting ("mais experientes primeiro")
+const LEVELS = [
+  { key: 'junior', label: 'Júnior', rank: 1, re: /junior|\bjr\b|estagi/ },
+  { key: 'pleno', label: 'Pleno', rank: 2, re: /pleno/ },
+  { key: 'senior', label: 'Sênior', rank: 3, re: /senior|\bsr\b/ },
+  { key: 'especialista', label: 'Especialista / Liderança', rank: 4, re: /especialista|coordena|gestor|tech lead/ },
+];
 
-// Seniority multi-select elements
-const senioritySelectBtn = document.getElementById('senioritySelectBtn');
-const seniorityDropdown = document.getElementById('seniorityDropdown');
-const seniorityOptions = document.getElementById('seniorityOptions');
+const MODES = [
+  { key: 'remoto', label: 'Remoto', re: /remot/ },
+  { key: 'hibrido', label: 'Híbrido', re: /hibrid/ },
+  { key: 'presencial', label: 'Presencial', re: /presencial/ },
+];
 
-// City multi-select elements
-const citySelectBtn = document.getElementById('citySelectBtn');
-const cityDropdown = document.getElementById('cityDropdown');
-const cityOptions = document.getElementById('cityOptions');
-const citySearchInput = document.getElementById('citySearchInput');
-let selectedCities = [];
+// Spelling fixes applied to free text coming from the form
+const TYPO_FIXES = [
+  [/enginner/gi, 'Engineer'],
+  [/ci[eê]ntista/gi, 'Cientista'],
+  [/markting/gi, 'Marketing'],
+  [/neg[oó]cios/gi, 'Negócios'],
+  [/opera?[cç][oõ]es/gi, 'Operações'],
+  [/e-?commecer/gi, 'E-commerce'],
+];
 
-// ========== HTML Sanitization ==========
+// ========== State ==========
+let people = [];
+let filtered = [];
+const state = {
+  query: '',
+  areas: new Set(),
+  levels: new Set(),
+  cities: new Set(),
+  skills: new Set(),
+  modes: new Set(),
+  immediate: false,
+  sort: 'relevancia',
+};
+let shortlist = loadShortlist();
+let lastFocus = null;
+let modalPushed = false;
+
+// ========== DOM ==========
+const $ = (id) => document.getElementById(id);
+const els = {
+  search: $('searchInput'),
+  sort: $('sortSelect'),
+  areaChips: $('areaChips'),
+  immediate: $('immediateToggle'),
+  clear: $('clearFilters'),
+  grid: $('cardsGrid'),
+  count: $('resultsCount'),
+  countLabel: $('resultsLabel'),
+  overlay: $('modalOverlay'),
+  modalContent: $('modalContent'),
+  modalClose: $('modalClose'),
+  bar: $('shortlistBar'),
+  barCount: $('shortlistCount'),
+  barLabel: $('shortlistLabel'),
+  barToggle: $('shortlistToggle'),
+  barList: $('shortlistList'),
+  barClear: $('shortlistClear'),
+  barSend: $('shortlistSend'),
+  toast: $('toast'),
+};
+
+// ========== Helpers ==========
 function esc(str) {
   const div = document.createElement('div');
-  div.textContent = str;
+  div.textContent = str == null ? '' : String(str);
   return div.innerHTML;
+}
+
+const norm = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+
+function slugify(s) {
+  return norm(s).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+function fixTypos(s) {
+  return TYPO_FIXES.reduce((acc, [re, to]) => acc.replace(re, to), s || '');
+}
+
+function capitalize(s) {
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+}
+
+function plural(n, one, many) {
+  return n === 1 ? one : many;
+}
+
+function icon(id) {
+  return `<svg class="icon" aria-hidden="true"><use href="#${id}"/></svg>`;
+}
+
+function getInitials(name) {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0][0].toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function safeUrl(url) {
+  return /^https?:\/\//i.test(url || '') ? url : '';
 }
 
 // ========== CSV Parser ==========
@@ -89,7 +164,6 @@ function parseCSV(text) {
       }
     }
   }
-  // Last row
   if (current || row.length > 0) {
     row.push(current.trim());
     if (row.length > 1 || row[0] !== '') rows.push(row);
@@ -102,7 +176,6 @@ function parseCSV(text) {
 function smartSplit(raw) {
   if (!raw) return { parts: [], mainDelimiter: ',' };
 
-  // Count delimiters outside parentheses to detect style
   let slashCount = 0;
   let pipeCount = 0;
   let depth = 0;
@@ -121,7 +194,6 @@ function smartSplit(raw) {
   else if (slashCount >= 2) mainDelimiter = '/';
   else mainDelimiter = ',';
 
-  // Split respecting parentheses
   const parts = [];
   let current = '';
   let parenDepth = 0;
@@ -146,727 +218,681 @@ function parseHabilidades(raw) {
   if (!raw) return [];
 
   const { parts, mainDelimiter } = smartSplit(raw);
-
   const skills = [];
 
   for (const part of parts) {
     const trimmed = part.trim();
     if (!trimmed) continue;
 
-    // Check for parenthetical sub-skills: "Python(Pandas, Matplotlib, Seaborn)"
-    // Only expand if delimiter is "/" (sub-items separated by commas inside parens)
+    // "Python(Pandas, Matplotlib)" expands only when the main delimiter is "/"
     const parenMatch = trimmed.match(/^([^(]+)\(([^)]+)\)$/);
     if (parenMatch && mainDelimiter === '/') {
       const main = parenMatch[1].trim();
       if (main) skills.push(main);
-      const subs = parenMatch[2].split(',').map(s => s.trim()).filter(Boolean);
-      skills.push(...subs);
+      skills.push(...parenMatch[2].split(',').map(s => s.trim()).filter(Boolean));
     } else {
-      // Clean up parenthetical labels like "Machine Learning (ML)" → "Machine Learning"
-      // But keep short ones like "GA4" or "R"
+      // "Machine Learning (ML)" → "Machine Learning"
       const cleaned = trimmed.replace(/\s*\([^)]*\)\s*$/, '').trim();
       if (cleaned) skills.push(cleaned);
     }
   }
 
-  return skills.filter(s => s.length > 0);
+  return skills.filter(Boolean);
 }
 
-// ========== CSV row → person object ==========
-function csvRowToPerson(row) {
-  // Columns: Nome, E-mail, Linkedin, Cidade/Estado, Modalidade, Formação, Habilidades, Experiência, Cargos, Portfólio, Disponibilidade, Senioridade
-  const nome = (row[0] || '').trim();
+// Roles come as "A / B | C", ". " or one per line
+function parseCargos(raw) {
+  const text = fixTypos(raw || '').replace(/\r?\n/g, ' / ').replace(/\.\s+(?=[A-ZÀ-Ú])/g, ' / ');
+  const seen = new Set();
+  return text.split(/\s*[\/|]\s*/)
+    .map(s => capitalize(s.trim().replace(/[.,;]+$/, '')))
+    .filter(s => s && s.length > 1)
+    .filter(s => {
+      const k = norm(s);
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+}
+
+function normalizeCity(raw) {
+  // "São Paulo / SP", "Itajaí, SC", "Sorocaba - SP" → "Cidade/UF"
+  let c = (raw || '').trim().replace(/\s*[,\-–]\s*/g, '/').replace(/\s*\/\s*/g, '/');
+  if (!c) return '';
+  if (!c.includes('/') && norm(c) === 'sao paulo') c = 'São Paulo/SP';
+  return c;
+}
+
+// ========== Row → person ==========
+function buildPerson(raw) {
+  const nome = (raw.nome || '').trim();
   if (!nome) return null;
 
-  const linkedin = (row[2] || '').trim();
-  const cidadeRaw = (row[3] || '').trim();
-  // Normalize: "São Paulo / SP" → "São Paulo/SP", "Itajaí, SC" → "Itajaí/SC", "Sorocaba - SP" → "Sorocaba/SP"
-  let cidade = cidadeRaw.replace(/\s*[,\-]\s*/g, '/').replace(/\s*\/\s*/g, '/');
-  // Fix city-only entries: "São Paulo" → "São Paulo/SP"
-  if (cidade && !cidade.includes('/')) cidade += '/SP';
-  const modalidade = (row[4] || '').trim();
-  const formacao = (row[5] || '').trim();
-  const habilidades = parseHabilidades(row[6] || '');
-  const experiencia = (row[7] || '').trim();
-  const cargosRaw = (row[8] || '');
-  const cargos = smartSplit(cargosRaw).parts.map(s => s.trim()).filter(Boolean);
-  const portfolio = (row[9] || '').trim();
-  const disponibilidade = (row[10] || '').trim();
-  const senioridade = (row[11] || '').trim();
+  const cargos = Array.isArray(raw.cargos) ? raw.cargos.flatMap(parseCargos) : parseCargos(raw.cargos);
+  const habilidades = Array.isArray(raw.habilidades) ? raw.habilidades : parseHabilidades(raw.habilidades);
+  const senioridadeRaw = (raw.senioridade || '').trim();
+  const experiencia = fixTypos((raw.experiencia || '').trim());
+  const modalidadeRaw = (raw.modalidade || '').trim();
+  const disponibilidade = (raw.disponibilidade || '').trim();
 
-  // Ensure linkedin is a full URL
-  let linkedinUrl = linkedin;
-  if (linkedin && !linkedin.startsWith('http')) {
-    linkedinUrl = 'https://' + linkedin;
-  }
+  const roleText = norm(cargos.join(' '));
+  const levelText = norm(senioridadeRaw) + ' ' + roleText;
+  const levels = LEVELS.filter(l => l.re.test(levelText)).map(l => l.key);
+  const maxRank = Math.max(0, ...LEVELS.filter(l => levels.includes(l.key)).map(l => l.rank));
 
-  // Ensure portfolio is a full URL
-  let portfolioUrl = portfolio;
-  if (portfolio && !portfolio.startsWith('http')) {
-    portfolioUrl = 'https://' + portfolio;
-  }
+  const areas = AREAS.filter(a => a.re.test(roleText)).map(a => a.key);
+  const modes = MODES.filter(m => m.re.test(norm(modalidadeRaw))).map(m => m.key);
+
+  let linkedin = (raw.linkedin || '').trim();
+  if (linkedin && !/^https?:\/\//i.test(linkedin)) linkedin = 'https://' + linkedin;
+  if (!/linkedin\.com/i.test(linkedin)) linkedin = '';
+
+  let portfolio = (raw.portfolio || '').trim();
+  if (portfolio && !/^https?:\/\//i.test(portfolio)) portfolio = 'https://' + portfolio;
+  if (!/\.[a-z]{2,}/i.test(portfolio)) portfolio = '';
+
+  const avail = parseAvailability(disponibilidade);
+
+  const completeness =
+    (experiencia.length > 150 ? 2 : experiencia ? 1 : 0) +
+    (linkedin ? 1 : 0) +
+    (portfolio ? 1 : 0) +
+    (levels.length ? 1 : 0);
 
   return {
     nome,
-    linkedin: linkedinUrl,
-    cidade,
-    modalidade,
-    formacao,
+    slug: slugify(nome),
+    linkedin,
+    portfolio,
+    cidade: normalizeCity(raw.cidade),
+    modalidade: modes.length ? modes.map(k => MODES.find(m => m.key === k).label).join(' · ') : modalidadeRaw,
+    modes,
+    formacao: (raw.formacao || '').trim(),
     habilidades,
     experiencia,
     cargos,
-    portfolio: portfolioUrl,
-    disponibilidade,
-    senioridade
+    role: cargos[0] || '',
+    levels,
+    maxRank,
+    levelLabel: levels.length ? levelLabelFor(senioridadeRaw, levels) : '',
+    levelShort: levels.length ? levelShortFor(senioridadeRaw, levels) : '',
+    areas,
+    avail,
+    completeness,
+    searchText: norm([nome, raw.cidade, raw.formacao, experiencia, senioridadeRaw, ...habilidades, ...cargos].join(' ')),
   };
 }
 
+function levelLabelFor(raw, levels) {
+  // Prefer what the person wrote ("Pleno/Senior"), with accents fixed
+  if (raw) {
+    return raw.split(/\s*[\/|,]\s*/).map(part => {
+      const lv = LEVELS.find(l => l.re.test(norm(part)));
+      if (!lv) return capitalize(part);
+      return lv.key === 'especialista' ? capitalize(part) : lv.label;
+    }).join(' / ');
+  }
+  const top = LEVELS.filter(l => levels.includes(l.key)).pop();
+  return top.key === 'especialista' ? 'Especialista' : top.label;
+}
+
+// Card badge: keep "Pleno / Sênior", collapse longer lists to the highest level
+function levelShortFor(raw, levels) {
+  const full = levelLabelFor(raw, levels);
+  if (full.split(' / ').length <= 2 && full.length <= 22) return full;
+  const top = LEVELS.filter(l => levels.includes(l.key)).pop();
+  return top.key === 'especialista' ? 'Especialista' : top.label;
+}
+
+function parseAvailability(raw) {
+  const a = norm(raw);
+  if (!a) return { label: '', days: 999, tone: 'gray' };
+  if (/imediat/.test(a)) return { label: 'Início imediato', days: 0, tone: 'green' };
+  const weeks = a.match(/(\d+|uma|duas|tres)\s*semana/);
+  if (weeks) {
+    const n = { uma: 1, duas: 2, tres: 3 }[weeks[1]] || parseInt(weeks[1], 10);
+    return { label: `Início em ${n} ${plural(n, 'semana', 'semanas')}`, days: n * 7, tone: 'amber' };
+  }
+  const days = a.match(/(\d+)\s*dias/);
+  if (days) return { label: `Início em ${days[1]} dias`, days: parseInt(days[1], 10), tone: 'amber' };
+  if (/negocia/.test(a)) return { label: 'Início a combinar', days: 60, tone: 'gray' };
+  return { label: capitalize(raw), days: 90, tone: 'gray' };
+}
+
+// Same skill written differently ("python", "Python ", "PowerBI") collapses into one
+function canonicalizeSkills(list) {
+  const variants = {};
+  list.forEach(p => p.habilidades.forEach(s => {
+    const k = norm(s).replace(/[\s.\-_]/g, '');
+    if (!k) return;
+    variants[k] = variants[k] || {};
+    variants[k][s] = (variants[k][s] || 0) + 1;
+  }));
+  const display = {};
+  Object.entries(variants).forEach(([k, v]) => {
+    display[k] = Object.entries(v).sort((a, b) => b[1] - a[1] || /[A-Z]/.test(b[0]) - /[A-Z]/.test(a[0]))[0][0];
+  });
+  list.forEach(p => {
+    const seen = new Set();
+    p.skillKeys = [];
+    p.habilidades = p.habilidades.map(s => {
+      const k = norm(s).replace(/[\s.\-_]/g, '');
+      return { k, label: display[k] || s };
+    }).filter(({ k }) => k && !seen.has(k) && seen.add(k)).map(({ k, label }) => {
+      p.skillKeys.push(k);
+      return label;
+    });
+  });
+  return display;
+}
+
 // ========== Fetch data ==========
-async function fetchData() {
-  // Try Google Sheets first
+async function fetchRows() {
   try {
     const res = await fetch(SHEETS_CSV_URL);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const text = await res.text();
-    const rows = parseCSV(text);
-
+    const rows = parseCSV(await res.text());
     if (rows.length < 2) throw new Error('No data rows');
-
-    // Skip header row (index 0), parse the rest
-    const people = rows.slice(1)
-      .map(csvRowToPerson)
-      .filter(p => p !== null && p.nome);
-
-    if (people.length > 0) {
-      console.log(`Loaded ${people.length} profiles from Google Sheets`);
-      return people;
-    }
-    throw new Error('No valid records parsed');
+    // Columns: Nome, E-mail, Linkedin, Cidade/Estado, Modalidade, Formação, Habilidades, Experiência, Cargos, Portfólio, Disponibilidade, Senioridade
+    return rows.slice(1).map(r => ({
+      nome: r[0], linkedin: r[2], cidade: r[3], modalidade: r[4], formacao: r[5],
+      habilidades: r[6], experiencia: r[7], cargos: r[8], portfolio: r[9],
+      disponibilidade: r[10], senioridade: r[11],
+    }));
   } catch (err) {
     console.warn('Google Sheets fetch failed, falling back to data.json:', err.message);
   }
-
-  // Fallback to static JSON
   const res = await fetch('./data.json');
-  const data = await res.json();
-  console.log(`Loaded ${data.length} profiles from data.json (fallback)`);
-  return data;
+  return res.json();
 }
 
 // ========== Init ==========
 async function init() {
-  try {
-    allData = await fetchData();
-    filteredData = [...allData];
+  $('year').textContent = new Date().getFullYear();
+  renderSkeleton();
 
-    populateSkillFilter();
-    populateCityFilter();
-    renderCards();
+  try {
+    const rows = await fetchRows();
+    const slugCount = {};
+    people = rows.map(buildPerson).filter(Boolean);
+    people.forEach(p => {
+      slugCount[p.slug] = (slugCount[p.slug] || 0) + 1;
+      if (slugCount[p.slug] > 1) p.slug += '-' + slugCount[p.slug];
+    });
+    const skillDisplay = canonicalizeSkills(people);
+
+    shortlist = shortlist.filter(s => people.some(p => p.slug === s));
+    renderStats();
+    buildAreaChips();
+    buildDropdowns(skillDisplay);
     bindEvents();
+    applyFilters();
+    renderShortlist();
+    openFromHash();
   } catch (err) {
     console.error('Error loading data:', err);
-    cardsGrid.innerHTML = '<div class="no-results"><h3>Erro ao carregar dados</h3><p>Tente recarregar a página.</p></div>';
+    els.grid.innerHTML = `<div class="no-results"><h3>Não foi possível carregar os perfis</h3><p>A página pode ser recarregada em alguns instantes. Se o problema continuar, entre em contato pelo LinkedIn.</p></div>`;
   }
 }
 
-// ========== Populate skill filter (multi-select) ==========
-function populateSkillFilter() {
-  const skillCount = {};
-  allData.forEach(person => {
-    person.habilidades.forEach(skill => {
-      const s = skill.trim();
-      if (s) skillCount[s] = (skillCount[s] || 0) + 1;
-    });
-  });
-
-  const sorted = Object.entries(skillCount)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 30);
-
-  skillOptions.innerHTML = sorted.map(([skill, count]) => `
-    <label class="multi-select-option" data-skill="${esc(skill)}">
-      <input type="checkbox" value="${esc(skill)}">
-      <span>${esc(skill)}</span>
-      <span style="margin-left:auto;color:var(--gray-400);font-size:0.7rem">${count}</span>
-    </label>
-  `).join('');
+function renderSkeleton() {
+  els.grid.innerHTML = Array.from({ length: 6 }, () => '<div class="skeleton"></div>').join('');
 }
 
-// ========== Populate City Filter ==========
-function populateCityFilter() {
-  const cityCount = {};
-  allData.forEach(person => {
-    if (person.cidade) {
-      // Extract just the city name (before the /) for grouping
-      const city = person.cidade;
-      cityCount[city] = (cityCount[city] || 0) + 1;
+function renderStats() {
+  const set = (k, v) => { const el = document.querySelector(`[data-stat="${k}"]`); if (el) el.textContent = v; };
+  set('total', people.length);
+  set('imediata', people.filter(p => p.avail.days === 0).length);
+  set('areas', AREAS.filter(a => people.some(p => p.areas.includes(a.key))).length);
+  set('cidades', new Set(people.map(p => p.cidade).filter(Boolean)).size);
+}
+
+// ========== Filters UI ==========
+function buildAreaChips() {
+  const counts = {};
+  people.forEach(p => p.areas.forEach(a => { counts[a] = (counts[a] || 0) + 1; }));
+  els.areaChips.innerHTML = AREAS.filter(a => counts[a.key]).map(a => `
+    <button type="button" class="chip" data-area="${a.key}" aria-pressed="false">
+      ${esc(a.label)} <span class="chip-count">${counts[a.key]}</span>
+    </button>`).join('');
+}
+
+const dropdowns = {};
+
+function buildDropdowns(skillDisplay) {
+  const count = (fn) => {
+    const c = {};
+    people.forEach(p => fn(p).forEach(v => { if (v) c[v] = (c[v] || 0) + 1; }));
+    return c;
+  };
+
+  const levelCounts = count(p => p.levels);
+  const cityCounts = count(p => [p.cidade]);
+  const skillCounts = count(p => p.skillKeys);
+  const modeCounts = count(p => p.modes);
+
+  dropdowns.seniority = makeDropdown('seniority', 'Senioridade', state.levels,
+    LEVELS.filter(l => levelCounts[l.key]).map(l => ({ value: l.key, label: l.label, count: levelCounts[l.key] })));
+
+  dropdowns.city = makeDropdown('city', 'Cidade', state.cities,
+    Object.entries(cityCounts).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .map(([v, n]) => ({ value: v, label: v, count: n })), { searchable: true, placeholder: 'Buscar cidade...' });
+
+  dropdowns.skill = makeDropdown('skill', 'Ferramentas', state.skills,
+    Object.entries(skillCounts).sort((a, b) => b[1] - a[1]).slice(0, 60)
+      .map(([k, n]) => ({ value: k, label: skillDisplay[k], count: n })), { searchable: true, placeholder: 'Buscar ferramenta...' });
+
+  dropdowns.mode = makeDropdown('mode', 'Modalidade', state.modes,
+    MODES.filter(m => modeCounts[m.key]).map(m => ({ value: m.key, label: m.label, count: modeCounts[m.key] })));
+}
+
+function makeDropdown(name, label, set, options, opts = {}) {
+  const root = document.querySelector(`[data-ms="${name}"]`);
+  root.innerHTML = `
+    <button type="button" class="chip ms-btn" aria-haspopup="true" aria-expanded="false">
+      <span class="ms-label">${esc(label)}</span>${icon('i-chev')}
+    </button>
+    <div class="ms-panel" role="group" aria-label="${esc(label)}">
+      ${opts.searchable ? `<div class="ms-search"><input type="text" placeholder="${esc(opts.placeholder)}" aria-label="${esc(opts.placeholder)}"></div>` : ''}
+      <div class="ms-options">
+        ${options.map(o => `
+          <label class="ms-option" data-label="${esc(norm(o.label))}">
+            <input type="checkbox" value="${esc(o.value)}">
+            <span>${esc(o.label)}</span>
+            <span class="ms-count">${o.count}</span>
+          </label>`).join('')}
+      </div>
+    </div>`;
+
+  const btn = root.querySelector('.ms-btn');
+  const labelEl = root.querySelector('.ms-label');
+  const search = root.querySelector('.ms-search input');
+
+  const sync = () => {
+    root.querySelectorAll('.ms-option input').forEach(cb => { cb.checked = set.has(cb.value); });
+    root.classList.toggle('has-value', set.size > 0);
+    if (set.size === 0) labelEl.textContent = label;
+    else if (set.size === 1) labelEl.textContent = options.find(o => o.value === [...set][0])?.label || label;
+    else labelEl.textContent = `${label} (${set.size})`;
+  };
+
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const open = !root.classList.contains('open');
+    closeDropdowns();
+    root.classList.toggle('open', open);
+    btn.setAttribute('aria-expanded', open);
+    if (open && search) {
+      search.value = '';
+      filterOptions('');
+      if (window.matchMedia('(min-width: 721px)').matches) search.focus();
     }
   });
 
-  const sorted = Object.entries(cityCount)
-    .sort((a, b) => b[1] - a[1]);
+  const filterOptions = (q) => {
+    const nq = norm(q);
+    root.querySelectorAll('.ms-option').forEach(o => { o.hidden = !o.dataset.label.includes(nq); });
+  };
+  if (search) search.addEventListener('input', () => filterOptions(search.value));
 
-  cityOptions.innerHTML = sorted.map(([city, count]) => `
-    <label class="multi-select-option" data-city="${esc(city)}">
-      <input type="checkbox" value="${esc(city)}">
-      <span>${esc(city)}</span>
-      <span style="margin-left:auto;color:var(--gray-400);font-size:0.7rem">${count}</span>
-    </label>
-  `).join('');
-}
-
-// ========== Skill Multi-Select Logic ==========
-function toggleSkillDropdown() {
-  const isOpen = skillDropdown.classList.contains('open');
-  if (isOpen) {
-    skillDropdown.classList.remove('open');
-    skillSelectBtn.classList.remove('active');
-  } else {
-    skillDropdown.classList.add('open');
-    skillSelectBtn.classList.add('active');
-    skillSearchInput.value = '';
-    filterSkillOptions('');
-    skillSearchInput.focus();
-  }
-}
-
-function filterSkillOptions(query) {
-  const q = query.toLowerCase();
-  skillOptions.querySelectorAll('.multi-select-option').forEach(opt => {
-    const skill = opt.dataset.skill.toLowerCase();
-    opt.style.display = skill.includes(q) ? 'flex' : 'none';
-  });
-}
-
-function toggleSkill(skill) {
-  const idx = selectedSkills.indexOf(skill);
-  if (idx >= 0) {
-    selectedSkills.splice(idx, 1);
-  } else {
-    selectedSkills.push(skill);
-  }
-  updateSkillUI();
-  applyFilters();
-}
-
-function removeSkill(skill) {
-  const idx = selectedSkills.indexOf(skill);
-  if (idx >= 0) {
-    selectedSkills.splice(idx, 1);
-    updateSkillUI();
+  root.querySelector('.ms-panel').addEventListener('click', (e) => e.stopPropagation());
+  root.querySelector('.ms-options').addEventListener('change', (e) => {
+    if (e.target.type !== 'checkbox') return;
+    if (e.target.checked) set.add(e.target.value); else set.delete(e.target.value);
+    sync();
     applyFilters();
-  }
-}
-
-function updateSkillUI() {
-  if (selectedSkills.length === 0) {
-    skillSelectBtn.querySelector('.multi-select-label').textContent = 'Habilidades';
-    skillSelectBtn.classList.remove('has-selection');
-  } else {
-    skillSelectBtn.querySelector('.multi-select-label').textContent = `${selectedSkills.length} selecionada${selectedSkills.length > 1 ? 's' : ''}`;
-    skillSelectBtn.classList.add('has-selection');
-  }
-
-  skillOptions.querySelectorAll('.multi-select-option').forEach(opt => {
-    const cb = opt.querySelector('input[type="checkbox"]');
-    const isChecked = selectedSkills.includes(cb.value);
-    cb.checked = isChecked;
-    opt.classList.toggle('checked', isChecked);
   });
 
-  selectedSkillsTags.innerHTML = selectedSkills.map(skill => `
-    <span class="skill-filter-tag" data-skill="${esc(skill)}">
-      ${esc(skill)}
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-    </span>
-  `).join('');
+  return { sync };
 }
 
-// ========== Area Multi-Select Logic ==========
-const areaLabels = { Analista: 'Analista', Engenheiro: 'Engenheiro', Cientista: 'Cientista', Analytics: 'Analytics', BI: 'BI' };
-
-function toggleAreaDropdown() {
-  const isOpen = areaDropdown.classList.contains('open');
-  if (isOpen) {
-    areaDropdown.classList.remove('open');
-    areaSelectBtn.classList.remove('active');
-  } else {
-    areaDropdown.classList.add('open');
-    areaSelectBtn.classList.add('active');
-  }
+function closeDropdowns() {
+  document.querySelectorAll('.ms.open').forEach(ms => {
+    ms.classList.remove('open');
+    ms.querySelector('.ms-btn').setAttribute('aria-expanded', 'false');
+  });
 }
 
-function toggleArea(value) {
-  const idx = selectedAreas.indexOf(value);
-  if (idx >= 0) {
-    selectedAreas.splice(idx, 1);
-  } else {
-    selectedAreas.push(value);
-  }
-  updateAreaUI();
+function syncFilterUI() {
+  els.areaChips.querySelectorAll('[data-area]').forEach(b => b.setAttribute('aria-pressed', state.areas.has(b.dataset.area)));
+  els.immediate.setAttribute('aria-pressed', state.immediate);
+  Object.values(dropdowns).forEach(d => d.sync());
+  const active = state.query || state.areas.size || state.levels.size || state.cities.size ||
+    state.skills.size || state.modes.size || state.immediate;
+  els.clear.hidden = !active;
+}
+
+// ========== Filtering & sorting ==========
+function applyFilters() {
+  const q = norm(state.query.trim());
+
+  filtered = people.filter(p => {
+    if (q && !q.split(/\s+/).every(t => p.searchText.includes(t))) return false;
+    if (state.areas.size && !p.areas.some(a => state.areas.has(a))) return false;
+    if (state.levels.size && !p.levels.some(l => state.levels.has(l))) return false;
+    if (state.cities.size && !state.cities.has(p.cidade)) return false;
+    if (state.skills.size && ![...state.skills].every(k => p.skillKeys.includes(k))) return false;
+    if (state.modes.size && !p.modes.some(m => state.modes.has(m))) return false;
+    if (state.immediate && p.avail.days !== 0) return false;
+    return true;
+  });
+
+  const byName = (a, b) => a.nome.localeCompare(b.nome, 'pt-BR');
+  if (state.sort === 'nome') filtered.sort(byName);
+  else if (state.sort === 'inicio') filtered.sort((a, b) => a.avail.days - b.avail.days || b.maxRank - a.maxRank || byName(a, b));
+  else filtered.sort((a, b) => b.maxRank - a.maxRank || b.completeness - a.completeness || byName(a, b));
+
+  syncFilterUI();
+  renderCards();
+}
+
+function clearAll() {
+  state.query = '';
+  els.search.value = '';
+  ['areas', 'levels', 'cities', 'skills', 'modes'].forEach(k => state[k].clear());
+  state.immediate = false;
   applyFilters();
-}
-
-function updateAreaUI() {
-  if (selectedAreas.length === 0) {
-    areaSelectBtn.querySelector('.multi-select-label').textContent = 'Área';
-    areaSelectBtn.classList.remove('has-selection');
-  } else {
-    areaSelectBtn.querySelector('.multi-select-label').textContent = selectedAreas.map(a => areaLabels[a] || a).join(', ');
-    areaSelectBtn.classList.add('has-selection');
-  }
-
-  areaOptions.querySelectorAll('.multi-select-option').forEach(opt => {
-    const cb = opt.querySelector('input[type="checkbox"]');
-    const isChecked = selectedAreas.includes(cb.value);
-    cb.checked = isChecked;
-    opt.classList.toggle('checked', isChecked);
-  });
-}
-
-// ========== Seniority Multi-Select Logic ==========
-function toggleSeniorityDropdown() {
-  const isOpen = seniorityDropdown.classList.contains('open');
-  if (isOpen) {
-    seniorityDropdown.classList.remove('open');
-    senioritySelectBtn.classList.remove('active');
-  } else {
-    seniorityDropdown.classList.add('open');
-    senioritySelectBtn.classList.add('active');
-  }
-}
-
-function toggleSeniority(value) {
-  const idx = selectedSeniorities.indexOf(value);
-  if (idx >= 0) {
-    selectedSeniorities.splice(idx, 1);
-  } else {
-    selectedSeniorities.push(value);
-  }
-  updateSeniorityUI();
-  applyFilters();
-}
-
-function updateSeniorityUI() {
-  if (selectedSeniorities.length === 0) {
-    senioritySelectBtn.querySelector('.multi-select-label').textContent = 'Senioridade';
-    senioritySelectBtn.classList.remove('has-selection');
-  } else {
-    senioritySelectBtn.querySelector('.multi-select-label').textContent = selectedSeniorities.join(', ');
-    senioritySelectBtn.classList.add('has-selection');
-  }
-
-  seniorityOptions.querySelectorAll('.multi-select-option').forEach(opt => {
-    const cb = opt.querySelector('input[type="checkbox"]');
-    const isChecked = selectedSeniorities.includes(cb.value);
-    cb.checked = isChecked;
-    opt.classList.toggle('checked', isChecked);
-  });
-}
-
-// ========== City Multi-Select Logic ==========
-function toggleCityDropdown() {
-  const isOpen = cityDropdown.classList.contains('open');
-  if (isOpen) {
-    cityDropdown.classList.remove('open');
-    citySelectBtn.classList.remove('active');
-  } else {
-    cityDropdown.classList.add('open');
-    citySelectBtn.classList.add('active');
-  }
-}
-
-function toggleCity(value) {
-  const idx = selectedCities.indexOf(value);
-  if (idx >= 0) {
-    selectedCities.splice(idx, 1);
-  } else {
-    selectedCities.push(value);
-  }
-  updateCityUI();
-  applyFilters();
-}
-
-function updateCityUI() {
-  if (selectedCities.length === 0) {
-    citySelectBtn.querySelector('.multi-select-label').textContent = 'Cidade';
-    citySelectBtn.classList.remove('has-selection');
-  } else {
-    const label = selectedCities.length === 1 ? selectedCities[0] : selectedCities.length + ' cidades';
-    citySelectBtn.querySelector('.multi-select-label').textContent = label;
-    citySelectBtn.classList.add('has-selection');
-  }
-
-  cityOptions.querySelectorAll('.multi-select-option').forEach(opt => {
-    const cb = opt.querySelector('input[type="checkbox"]');
-    const isChecked = selectedCities.includes(cb.value);
-    cb.checked = isChecked;
-    opt.classList.toggle('checked', isChecked);
-  });
-}
-
-function filterCityOptions(query) {
-  const q = query.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  cityOptions.querySelectorAll('.multi-select-option').forEach(opt => {
-    const city = (opt.dataset.city || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    opt.style.display = city.includes(q) ? '' : 'none';
-  });
 }
 
 // ========== Render cards ==========
 function renderCards() {
-  if (filteredData.length === 0) {
-    cardsGrid.innerHTML = `
+  els.count.textContent = filtered.length;
+  els.countLabel.textContent = plural(filtered.length, 'perfil', 'perfis');
+
+  if (!filtered.length) {
+    els.grid.innerHTML = `
       <div class="no-results">
-        <h3>Nenhum talento encontrado</h3>
-        <p>Tente ajustar os filtros ou entre em contato para indicações personalizadas.</p>
-      </div>
-    `;
-    resultsCount.textContent = '0';
+        <h3>Nenhum perfil encontrado com esses filtros</h3>
+        <p>Nem todos os membros da comunidade estão listados aqui. Se você precisa de outro tipo de indicação, fale diretamente com Heitor Sasaki.</p>
+        <div class="no-results-actions">
+          <button type="button" class="btn btn-outline" data-action="clear">Limpar filtros</button>
+          <a class="btn btn-li" href="${LINKEDIN_URL}" target="_blank" rel="noopener">${icon('i-in')}Falar com Heitor no LinkedIn</a>
+        </div>
+      </div>`;
     return;
   }
 
-  resultsCount.textContent = filteredData.length;
-
-  cardsGrid.innerHTML = filteredData.map((person, i) => {
-    const initials = esc(getInitials(person.nome));
-    const skills = person.habilidades.slice(0, 5);
-    const extra = person.habilidades.length - 5;
-    const roles = esc(person.cargos.join(' / '));
-    const availClass = getAvailClass(person.disponibilidade);
-    const availLabel = getAvailLabel(person.disponibilidade);
-
+  els.grid.innerHTML = filtered.map((p, i) => {
+    const selected = shortlist.includes(p.slug);
+    const skills = p.habilidades.slice(0, 5);
+    const extra = p.habilidades.length - skills.length;
     return `
-      <div class="card" data-index="${i}" style="animation-delay: ${Math.min(i * 0.02, 0.2)}s">
-        <div class="card-header">
-          <div class="card-avatar">${initials}</div>
-          ${availLabel ? `<span class="card-availability ${availClass}">${esc(availLabel)}</span>` : ''}
+      <article class="card${selected ? ' is-selected' : ''}" data-slug="${esc(p.slug)}" style="animation-delay:${Math.min(i * 0.025, 0.25)}s">
+        <div class="card-top">
+          <div class="avatar" aria-hidden="true">${esc(getInitials(p.nome))}</div>
+          <div class="card-id">
+            <h3><button type="button" class="card-name" data-action="open">${esc(p.nome)}</button></h3>
+            <p class="card-role">${esc(p.role || 'Profissional de dados')}${p.levelShort ? `<span class="badge">${esc(p.levelShort)}</span>` : ''}</p>
+          </div>
         </div>
-        <div class="card-name">${esc(person.nome)}</div>
         <div class="card-meta">
-          ${person.cidade ? `
-            <span>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-              ${esc(person.cidade)}
-            </span>
-          ` : ''}
-          <span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
-            ${esc(person.modalidade)}
-          </span>
+          ${p.cidade ? `<span>${icon('i-pin')}${esc(p.cidade)}</span>` : ''}
+          ${p.modalidade ? `<span>${esc(p.modalidade)}</span>` : ''}
         </div>
-        <div class="card-roles">${roles}${person.senioridade ? ` <span class="card-seniority">${esc(person.senioridade)}</span>` : ''}</div>
-        <div class="card-skills">
-          ${skills.map(s => `<span class="skill-tag">${esc(s)}</span>`).join('')}
-          ${extra > 0 ? `<span class="skill-more">+${extra}</span>` : ''}
+        ${p.experiencia ? `<p class="card-summary">${esc(p.experiencia)}</p>` : ''}
+        <div class="tags">
+          ${skills.map(s => `<span class="tag">${esc(s)}</span>`).join('')}
+          ${extra > 0 ? `<span class="tag-more">+${extra}</span>` : ''}
         </div>
-      </div>
-    `;
+        <div class="card-foot">
+          <span class="avail">${p.avail.label ? `<span class="dot dot-${p.avail.tone}"></span>${esc(p.avail.label)}` : ''}</span>
+          ${selectButton(p, selected)}
+        </div>
+      </article>`;
   }).join('');
 }
 
-// ========== Helpers ==========
-function getInitials(name) {
-  const parts = name.trim().split(' ');
-  if (parts.length === 1) return parts[0][0].toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+function selectButton(p, selected) {
+  return `<button type="button" class="select-btn" data-action="toggle" data-slug="${esc(p.slug)}" aria-pressed="${selected}" aria-label="${selected ? 'Tirar' : 'Adicionar'} ${esc(p.nome)} ${selected ? 'da' : 'na'} lista">
+    ${icon(selected ? 'i-check' : 'i-plus')}${selected ? 'Na lista' : 'Adicionar à lista'}
+  </button>`;
 }
 
-function getAvailClass(avail) {
-  if (!avail) return '';
-  const a = avail.toLowerCase();
-  if (a.includes('imediata') || a.includes('imediato')) return 'avail-immediate';
-  if (a.includes('semana')) return 'avail-soon';
-  return 'avail-negotiable';
+// ========== Shortlist ==========
+function loadShortlist() {
+  try {
+    const v = JSON.parse(localStorage.getItem(SHORTLIST_KEY) || '[]');
+    return Array.isArray(v) ? v : [];
+  } catch { return []; }
 }
 
-function getAvailLabel(avail) {
-  if (!avail) return '';
-  const a = avail.toLowerCase();
-  if (a.includes('imediata') || a.includes('imediato')) return 'Imediata';
-  if (a.includes('1 semana')) return '1 semana';
-  if (a.includes('2 semana')) return '2 semanas';
-  if (a.includes('3 semana')) return '3 semanas';
-  if (a.includes('mediante') || a.includes('negoci')) return 'A negociar';
-  if (a.includes('15 dias') || a.includes('aviso')) return '15 dias';
-  return avail;
+function saveShortlist() {
+  try { localStorage.setItem(SHORTLIST_KEY, JSON.stringify(shortlist)); } catch { /* private mode */ }
 }
 
-// ========== Filter logic ==========
-function applyFilters() {
-  const query = searchInput.value.toLowerCase().trim();
-  const mode = filterMode.value;
+function toggleShortlist(slug) {
+  const i = shortlist.indexOf(slug);
+  if (i >= 0) shortlist.splice(i, 1); else shortlist.push(slug);
+  saveShortlist();
+  renderShortlist();
 
-  filteredData = allData.filter(person => {
-    if (query) {
-      const searchable = [
-        person.nome,
-        person.cidade,
-        person.formacao,
-        person.experiencia,
-        person.senioridade,
-        ...person.habilidades,
-        ...person.cargos
-      ].join(' ').toLowerCase();
-      if (!searchable.includes(query)) return false;
-    }
-
-    if (selectedAreas.length > 0) {
-      const cargosStr = person.cargos.join(' ').toLowerCase();
-      const matchesAny = selectedAreas.some(a => cargosStr.includes(a.toLowerCase()));
-      if (!matchesAny) return false;
-    }
-
-    if (selectedSeniorities.length > 0) {
-      const normalize = str => str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-      // Search in both senioridade field AND cargos (for Especialista, Coordenador etc)
-      const combined = normalize((person.senioridade || '') + ' ' + person.cargos.join(' '));
-      const matchesAny = selectedSeniorities.some(sel => combined.includes(normalize(sel)));
-      if (!matchesAny) return false;
-    }
-
-    if (selectedCities.length > 0) {
-      const matchesAny = selectedCities.some(city => person.cidade === city);
-      if (!matchesAny) return false;
-    }
-
-    if (selectedSkills.length > 0) {
-      const personSkills = person.habilidades.map(s => s.toLowerCase());
-      const hasAll = selectedSkills.every(skill =>
-        personSkills.some(ps => ps.includes(skill.toLowerCase()))
-      );
-      if (!hasAll) return false;
-    }
-
-    if (mode) {
-      if (!person.modalidade.toLowerCase().includes(mode.toLowerCase())) return false;
-    }
-
-    return true;
+  const selected = shortlist.includes(slug);
+  document.querySelectorAll(`.card[data-slug="${CSS.escape(slug)}"]`).forEach(card => {
+    card.classList.toggle('is-selected', selected);
+    const p = people.find(x => x.slug === slug);
+    card.querySelector('.select-btn').outerHTML = selectButton(p, selected);
   });
+  const modalBtn = els.modalContent.querySelector('[data-action="toggle"]');
+  if (modalBtn && modalBtn.dataset.slug === slug) {
+    modalBtn.classList.toggle('is-on', selected);
+    modalBtn.innerHTML = `${icon(selected ? 'i-check' : 'i-plus')}${selected ? 'Na lista' : 'Adicionar à lista'}`;
+  }
+}
 
-  renderCards();
+function renderShortlist() {
+  const items = shortlist.map(s => people.find(p => p.slug === s)).filter(Boolean);
+  els.bar.hidden = items.length === 0;
+  if (!items.length) {
+    els.barList.hidden = true;
+    els.barToggle.setAttribute('aria-expanded', 'false');
+    return;
+  }
+  els.barCount.textContent = items.length;
+  els.barLabel.textContent = plural(items.length, 'perfil na lista', 'perfis na lista');
+  els.barList.innerHTML = items.map(p => `
+    <li>
+      <span>${esc(p.nome)} <span class="sl-role">· ${esc(p.role)}</span></span>
+      <button type="button" data-action="toggle" data-slug="${esc(p.slug)}" aria-label="Tirar ${esc(p.nome)} da lista">${icon('i-x')}</button>
+    </li>`).join('');
+}
+
+// ========== Indication request (LinkedIn) ==========
+function profileUrl(p) {
+  return `${SITE_URL}#perfil/${p.slug}`;
+}
+
+function personLine(p) {
+  return `${p.nome}${p.role ? ` (${p.role})` : ''}`;
+}
+
+function singleMessage(p) {
+  return `Olá, Heitor. Vi o perfil de ${personLine(p)} no banco de talentos da Data Creators e gostaria de solicitar uma indicação.\n${profileUrl(p)}`;
+}
+
+function shortlistMessage(items) {
+  if (items.length === 1) return singleMessage(items[0]);
+  const lines = items.map(p => `• ${personLine(p)}\n${profileUrl(p)}`).join('\n');
+  return `Olá, Heitor. Selecionei alguns perfis no banco de talentos da Data Creators e gostaria de solicitar a indicação destes profissionais:\n\n${lines}`;
+}
+
+// The <a> opens LinkedIn in a new tab; the copy runs inside the same click
+async function copyRequest(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    toast('Mensagem copiada. Basta colar no chat do LinkedIn.', 4000);
+  } catch {
+    toast('Não foi possível copiar a mensagem. Os nomes podem ser enviados no chat do LinkedIn.', 4000);
+  }
 }
 
 // ========== Modal ==========
-function openModal(index) {
-  const person = filteredData[index];
-  if (!person) return;
+function openModal(slug, { push = true } = {}) {
+  const p = people.find(x => x.slug === slug);
+  if (!p) return;
+  lastFocus = document.activeElement;
+  const selected = shortlist.includes(p.slug);
+  const linkedin = safeUrl(p.linkedin);
+  const portfolio = safeUrl(p.portfolio);
 
-  const initials = getInitials(person.nome);
-  const roles = person.cargos.join(' / ');
-
-  const safeUrl = url => /^https?:\/\//i.test(url) ? esc(url) : '#';
-
-  modalContent.innerHTML = `
-    <div class="modal-avatar">${esc(initials)}</div>
-    <div class="modal-name">${esc(person.nome)}</div>
-    <div class="modal-roles">${esc(roles)}</div>
-
-    <div class="modal-meta-grid">
-      ${person.cidade ? `
-        <div class="modal-meta-item">
-          <span class="modal-meta-label">Localização</span>
-          <span class="modal-meta-value">${esc(person.cidade)}</span>
-        </div>
-      ` : ''}
-      <div class="modal-meta-item">
-        <span class="modal-meta-label">Modalidade</span>
-        <span class="modal-meta-value">${esc(person.modalidade)}</span>
-      </div>
-      <div class="modal-meta-item">
-        <span class="modal-meta-label">Formação</span>
-        <span class="modal-meta-value">${esc(person.formacao)}</span>
-      </div>
-      <div class="modal-meta-item">
-        <span class="modal-meta-label">Disponibilidade</span>
-        <span class="modal-meta-value">${esc(person.disponibilidade || 'Consultar')}</span>
-      </div>
-      ${person.senioridade ? `
-      <div class="modal-meta-item">
-        <span class="modal-meta-label">Senioridade</span>
-        <span class="modal-meta-value">${esc(person.senioridade)}</span>
-      </div>
-      ` : ''}
-    </div>
-
-    ${person.experiencia ? `
-      <div class="modal-section">
-        <div class="modal-section-title">Experiência</div>
-        <p>${esc(person.experiencia)}</p>
-      </div>
-    ` : ''}
-
-    <div class="modal-section">
-      <div class="modal-section-title">Habilidades Técnicas</div>
-      <div class="modal-skills">
-        ${person.habilidades.map(s => `<span class="modal-skill-tag">${esc(s)}</span>`).join('')}
+  els.modalContent.innerHTML = `
+    <div class="m-head">
+      <div class="avatar" aria-hidden="true">${esc(getInitials(p.nome))}</div>
+      <div>
+        <h2 class="m-name" id="modalName">${esc(p.nome)}</h2>
+        <p class="m-role">${esc(p.role || 'Profissional de dados')}${p.levelLabel ? `<span class="badge">${esc(p.levelLabel)}</span>` : ''}</p>
       </div>
     </div>
-
-    <div class="modal-actions">
-      ${person.linkedin && person.linkedin.includes('linkedin.com') ? `
-        <a href="${safeUrl(person.linkedin)}" target="_blank" rel="noopener" class="modal-btn modal-btn-primary">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-          </svg>
-          Ver LinkedIn
-        </a>
-      ` : ''}
-      ${person.portfolio ? `
-        <a href="${safeUrl(person.portfolio)}" target="_blank" rel="noopener" class="modal-btn modal-btn-secondary">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-            <polyline points="15 3 21 3 21 9"/>
-            <line x1="10" x2="21" y1="14" y2="3"/>
-          </svg>
-          Portfólio
-        </a>
-      ` : ''}
-      <a href="https://www.linkedin.com/in/heitorsasaki/" target="_blank" rel="noopener" class="modal-btn modal-btn-secondary">
-        Solicitar indicação
-      </a>
+    <div class="m-meta">
+      ${p.cidade ? `<span>${icon('i-pin')}${esc(p.cidade)}</span>` : ''}
+      ${p.modalidade ? `<span>${esc(p.modalidade)}</span>` : ''}
+      ${p.avail.label ? `<span><span class="dot dot-${p.avail.tone}"></span>${esc(p.avail.label)}</span>` : ''}
     </div>
-  `;
 
-  modalOverlay.classList.add('active');
-  document.body.style.overflow = 'hidden';
+    <div class="m-actions">
+      <a class="btn btn-li" href="${LINKEDIN_URL}" target="_blank" rel="noopener" data-action="request" data-slug="${esc(p.slug)}">${icon('i-in')}Solicitar indicação</a>
+      <button type="button" class="btn btn-outline${selected ? ' is-on' : ''}" data-action="toggle" data-slug="${esc(p.slug)}">${icon(selected ? 'i-check' : 'i-plus')}${selected ? 'Na lista' : 'Adicionar à lista'}</button>
+      ${linkedin ? `<a class="btn btn-outline" href="${esc(linkedin)}" target="_blank" rel="noopener">${icon('i-in')}Perfil no LinkedIn</a>` : ''}
+      ${portfolio ? `<a class="btn btn-outline" href="${esc(portfolio)}" target="_blank" rel="noopener">${icon('i-ext')}Portfólio</a>` : ''}
+      <button type="button" class="btn btn-outline" data-action="copy" data-slug="${esc(p.slug)}">${icon('i-link')}Copiar link</button>
+    </div>
+
+    ${p.experiencia ? `
+      <div class="m-section">
+        <p class="m-label">Experiência</p>
+        <p>${esc(p.experiencia)}</p>
+      </div>` : ''}
+
+    ${p.habilidades.length ? `
+      <div class="m-section">
+        <p class="m-label">Ferramentas</p>
+        <div class="tags">${p.habilidades.map(s => `<span class="tag">${esc(s)}</span>`).join('')}</div>
+      </div>` : ''}
+
+    <div class="m-section">
+      <p class="m-label">Detalhes</p>
+      <dl class="m-grid">
+        ${p.cargos.length ? `<div><dt>Cargos de interesse</dt><dd>${esc(p.cargos.join(', '))}</dd></div>` : ''}
+        ${p.formacao ? `<div><dt>Formação</dt><dd>${esc(p.formacao)}</dd></div>` : ''}
+      </dl>
+    </div>`;
+
+  els.overlay.hidden = false;
+  document.body.classList.add('no-scroll');
+  els.modalClose.focus();
+  modalPushed = false;
+  if (push && location.hash !== `#perfil/${p.slug}`) {
+    history.pushState(null, '', `#perfil/${p.slug}`);
+    modalPushed = true;
+  }
 }
 
-function closeModal() {
-  modalOverlay.classList.remove('active');
-  document.body.style.overflow = '';
+function closeModal({ pop = true } = {}) {
+  if (els.overlay.hidden) return;
+  els.overlay.hidden = true;
+  document.body.classList.remove('no-scroll');
+  // Opened from a click: go back so the browser back button stays clean.
+  // Opened from a shared link: just drop the hash.
+  if (pop && location.hash.startsWith('#perfil/')) {
+    if (modalPushed) history.back();
+    else history.replaceState(null, '', location.pathname + location.search);
+  }
+  modalPushed = false;
+  if (lastFocus && document.contains(lastFocus)) lastFocus.focus();
 }
 
-// ========== Event Bindings ==========
+function openFromHash() {
+  const m = location.hash.match(/^#perfil\/(.+)$/);
+  if (m) openModal(decodeURIComponent(m[1]), { push: false });
+  else closeModal({ pop: false });
+}
+
+async function copyProfileLink(slug) {
+  const p = people.find(x => x.slug === slug);
+  if (!p) return;
+  try {
+    await navigator.clipboard.writeText(profileUrl(p));
+    toast('Link copiado');
+  } catch {
+    toast(profileUrl(p));
+  }
+}
+
+let toastTimer;
+function toast(msg, ms = 2200) {
+  els.toast.textContent = msg;
+  els.toast.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { els.toast.hidden = true; }, ms);
+}
+
+// ========== Events ==========
 function bindEvents() {
-  let debounceTimer;
-  searchInput.addEventListener('input', () => {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(applyFilters, 250);
+  let debounce;
+  els.search.addEventListener('input', () => {
+    clearTimeout(debounce);
+    debounce = setTimeout(() => { state.query = els.search.value; applyFilters(); }, 200);
   });
 
-  skillSelectBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    toggleSkillDropdown();
-  });
+  els.sort.addEventListener('change', () => { state.sort = els.sort.value; applyFilters(); });
 
-  skillSearchInput.addEventListener('input', (e) => {
-    filterSkillOptions(e.target.value);
-  });
-
-  skillSearchInput.addEventListener('click', (e) => {
-    e.stopPropagation();
-  });
-
-  skillOptions.addEventListener('change', (e) => {
-    if (e.target.type === 'checkbox') {
-      toggleSkill(e.target.value);
-    }
-  });
-
-  selectedSkillsTags.addEventListener('click', (e) => {
-    const tag = e.target.closest('.skill-filter-tag');
-    if (tag) {
-      removeSkill(tag.dataset.skill);
-    }
-  });
-
-  // Area multi-select events
-  areaSelectBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    toggleAreaDropdown();
-  });
-
-  areaOptions.addEventListener('change', (e) => {
-    if (e.target.type === 'checkbox') {
-      toggleArea(e.target.value);
-    }
-  });
-
-  // Seniority multi-select events
-  senioritySelectBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    toggleSeniorityDropdown();
-  });
-
-  seniorityOptions.addEventListener('change', (e) => {
-    if (e.target.type === 'checkbox') {
-      toggleSeniority(e.target.value);
-    }
-  });
-
-  // City multi-select events
-  citySelectBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    toggleCityDropdown();
-  });
-
-  citySearchInput.addEventListener('input', (e) => {
-    filterCityOptions(e.target.value);
-  });
-
-  citySearchInput.addEventListener('click', (e) => {
-    e.stopPropagation();
-  });
-
-  cityOptions.addEventListener('change', (e) => {
-    if (e.target.type === 'checkbox') {
-      toggleCity(e.target.value);
-    }
-  });
-
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('#skillMultiSelect')) {
-      skillDropdown.classList.remove('open');
-      skillSelectBtn.classList.remove('active');
-    }
-    if (!e.target.closest('#areaMultiSelect')) {
-      areaDropdown.classList.remove('open');
-      areaSelectBtn.classList.remove('active');
-    }
-    if (!e.target.closest('#seniorityMultiSelect')) {
-      seniorityDropdown.classList.remove('open');
-      senioritySelectBtn.classList.remove('active');
-    }
-    if (!e.target.closest('#cityMultiSelect')) {
-      cityDropdown.classList.remove('open');
-      citySelectBtn.classList.remove('active');
-    }
-  });
-
-  filterMode.addEventListener('change', applyFilters);
-
-  clearFilters.addEventListener('click', () => {
-    searchInput.value = '';
-    filterMode.value = '';
-    selectedAreas = [];
-    selectedSkills = [];
-    selectedSeniorities = [];
-    selectedCities = [];
-    updateAreaUI();
-    updateSkillUI();
-    updateSeniorityUI();
-    updateCityUI();
+  els.areaChips.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-area]');
+    if (!b) return;
+    const k = b.dataset.area;
+    if (state.areas.has(k)) state.areas.delete(k); else state.areas.add(k);
     applyFilters();
   });
 
-  cardsGrid.addEventListener('click', (e) => {
+  els.immediate.addEventListener('click', () => { state.immediate = !state.immediate; applyFilters(); });
+  els.clear.addEventListener('click', clearAll);
+
+  els.grid.addEventListener('click', (e) => {
+    const action = e.target.closest('[data-action]');
+    if (action?.dataset.action === 'toggle') return toggleShortlist(action.dataset.slug);
+    if (action?.dataset.action === 'clear') return clearAll();
     const card = e.target.closest('.card');
-    if (card) {
-      const index = parseInt(card.dataset.index);
-      openModal(index);
+    if (card) openModal(card.dataset.slug);
+  });
+
+  els.modalContent.addEventListener('click', (e) => {
+    const action = e.target.closest('[data-action]');
+    if (!action) return;
+    if (action.dataset.action === 'toggle') toggleShortlist(action.dataset.slug);
+    if (action.dataset.action === 'copy') copyProfileLink(action.dataset.slug);
+    if (action.dataset.action === 'request') {
+      const p = people.find(x => x.slug === action.dataset.slug);
+      if (p) copyRequest(singleMessage(p));
     }
   });
 
-  modalClose.addEventListener('click', closeModal);
-  modalOverlay.addEventListener('click', (e) => {
-    if (e.target === modalOverlay) closeModal();
+  els.modalClose.addEventListener('click', () => closeModal());
+  els.overlay.addEventListener('click', (e) => { if (e.target === els.overlay) closeModal(); });
+
+  els.barToggle.addEventListener('click', () => {
+    const open = els.barList.hidden;
+    els.barList.hidden = !open;
+    els.barToggle.setAttribute('aria-expanded', open);
   });
+  els.barList.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-action="toggle"]');
+    if (b) toggleShortlist(b.dataset.slug);
+  });
+  els.barSend.addEventListener('click', () => {
+    const items = shortlist.map(s => people.find(p => p.slug === s)).filter(Boolean);
+    copyRequest(shortlistMessage(items));
+  });
+  els.barClear.addEventListener('click', () => {
+    const slugs = [...shortlist];
+    slugs.forEach(toggleShortlist);
+  });
+
+  document.addEventListener('click', closeDropdowns);
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeModal();
+    if (e.key !== 'Escape') return;
+    if (!els.overlay.hidden) closeModal();
+    else closeDropdowns();
   });
+  window.addEventListener('popstate', openFromHash);
 }
 
-// ========== Start ==========
 document.addEventListener('DOMContentLoaded', init);
