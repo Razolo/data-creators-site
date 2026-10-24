@@ -6,7 +6,7 @@
 const SHEET_ID = '1pHDKC5Pj2KrhqquEskscExpMmNArob74HD9Q4vGOrIo';
 const SHEET_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Respostas`;
 // Google Form where members add their salary
-const FORM_URL = '';
+const FORM_URL = 'https://docs.google.com/forms/d/132VAAhVx4sU6kDf5mtXzMscL9uQYWGDCvSS6LUP8XJA/viewform';
 
 // Form question titles → field names (order in the sheet doesn't matter)
 const COLUMNS = {
