@@ -61,6 +61,13 @@
 .sal-table .num { text-align: right; white-space: nowrap; }
 .sal-table .sub { display: block; font-size: 13px; color: var(--stone-2); margin-top: 2px; }
 .sal-table .money { font-weight: 600; color: var(--sumi); font-variant-numeric: tabular-nums; }
+.sal-table .col-bonus { min-width: 180px; max-width: 280px; }
+.sal-table .bonus {
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+  font-size: 13.5px; color: var(--stone-3); white-space: normal; overflow-wrap: anywhere;
+}
+.sal-table .bonus { cursor: pointer; }
+.sal-table tr.is-open .bonus { -webkit-line-clamp: unset; display: block; }
 .pill { display: inline-block; padding: 2px 8px; border-radius: 4px; background: var(--indigo-tint); color: var(--indigo); font-size: 12.5px; font-weight: 600; }
 .sal-empty { text-align: center; color: var(--stone-2); padding: 40px 16px !important; }
 
@@ -86,7 +93,9 @@
   }
   .sal-table td { border: 0; padding: 6px 14px; display: flex; justify-content: space-between; gap: 16px; text-align: right; }
   .sal-table td::before { content: attr(data-label); font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--stone-2); text-align: left; padding-top: 3px; }
-  .sal-table td > * { text-align: right; }
+  .sal-table td > * { text-align: right; min-width: 0; }
+  .sal-table .col-bonus { max-width: none; }
+  .sal-table td.col-bonus > div { max-width: 70%; }
   .sal-table tbody tr:hover td { background: none; }
   .sal-empty { display: block; }
   .sal-empty::before { content: none !important; }

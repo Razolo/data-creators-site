@@ -13,7 +13,6 @@ const COLUMNS = {
   cargo: 'Cargo',
   senioridade: 'Senioridade',
   area: 'Área',
-  empresa: 'Empresa',
   setor: 'Setor',
   cidade: 'Cidade/UF',
   modalidade: 'Modalidade',
@@ -92,14 +91,20 @@ function toRows(table) {
     const expRaw = get(r, 'exp');
     const row = {
       cargo: get(r, 'cargo'), senioridade: get(r, 'senioridade'), area: get(r, 'area'),
-      empresa: get(r, 'empresa'), setor: get(r, 'setor'), cidade: get(r, 'cidade'),
-      modalidade: get(r, 'modalidade'), regime: get(r, 'regime'), bonus: get(r, 'bonus'),
+      setor: get(r, 'setor'), cidade: get(r, 'cidade'),
+      modalidade: get(r, 'modalidade'), regime: get(r, 'regime'), bonus: cleanBonus(get(r, 'bonus')),
       salario, exp: expRaw === '' ? NaN : parseFloat(expRaw.replace(',', '.')),
     };
     row.local = row.cidade;
-    row.search = norm([row.cargo, row.senioridade, row.area, row.empresa, row.setor, row.cidade, row.modalidade, row.regime].join(' '));
+    row.search = norm([row.cargo, row.senioridade, row.area, row.setor, row.cidade, row.modalidade, row.regime, row.bonus].join(' '));
     return row;
   }).filter(r => r.cargo && Number.isFinite(r.salario) && r.salario > 0);
+}
+
+// "Não", "-", "nenhum" are answers to the question, not benefits
+function cleanBonus(raw) {
+  const t = (raw || '').trim();
+  return /^(n[aã]o|nao tem|nenhum|nenhuma|-+|n\/a|na|sem)\.?$/i.test(t) ? '' : t;
 }
 
 // ========== Init ==========
@@ -107,14 +112,14 @@ async function init() {
   $('year').textContent = new Date().getFullYear();
   if (FORM_URL) els.form.href = FORM_URL; else els.form.parentElement.hidden = true;
 
-  els.body.innerHTML = `<tr><td colspan="7" class="sal-empty">Carregando...</td></tr>`;
+  els.body.innerHTML = `<tr><td colspan="8" class="sal-empty">Carregando...</td></tr>`;
   try {
     const res = await fetch(SHEET_CSV_URL);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     rows = toRows(parseCSV(await res.text()));
   } catch (err) {
     console.error('Salary sheet failed to load:', err);
-    els.body.innerHTML = `<tr><td colspan="7" class="sal-empty">Não foi possível carregar os salários agora. Recarrega a página em alguns instantes.</td></tr>`;
+    els.body.innerHTML = `<tr><td colspan="8" class="sal-empty">Não foi possível carregar os salários agora. Recarrega a página em alguns instantes.</td></tr>`;
     return;
   }
 
@@ -167,14 +172,14 @@ function median(list) {
 }
 
 function renderStats() {
-  const companies = new Set(view.map(r => norm(r.empresa)).filter(Boolean)).size;
+  const sectors = new Set(view.map(r => r.setor).filter(Boolean)).size;
   const byRegime = ['CLT', 'PJ'].map(reg => {
     const vals = view.filter(r => r.regime === reg).map(r => r.salario);
     return { reg, n: vals.length, med: vals.length >= MIN_FOR_MEDIAN ? median(vals) : null };
   });
   els.stats.innerHTML = `
     <div><dd>${view.length}</dd><dt>${view.length === 1 ? 'resposta' : 'respostas'}</dt></div>
-    <div><dd>${companies}</dd><dt>${companies === 1 ? 'empresa' : 'empresas'}</dt></div>
+    <div><dd>${sectors}</dd><dt>${sectors === 1 ? 'setor' : 'setores'}</dt></div>
     ${byRegime.map(b => `
       <div><dd>${b.med ? brl(b.med) : '·'}</dd><dt>mediana ${b.reg}${b.med ? '' : ` <small>(aparece com ${MIN_FOR_MEDIAN}+ respostas)</small>`}</dt></div>`).join('')}`;
 }
@@ -184,7 +189,7 @@ function renderTable() {
   els.countLabel.textContent = view.length === 1 ? 'resposta' : 'respostas';
 
   if (!view.length) {
-    els.body.innerHTML = `<tr><td colspan="7" class="sal-empty">Nenhuma resposta com esses filtros.</td></tr>`;
+    els.body.innerHTML = `<tr><td colspan="8" class="sal-empty">Nenhuma resposta com esses filtros.</td></tr>`;
     return;
   }
 
@@ -193,11 +198,12 @@ function renderTable() {
     <tr>
       ${cell('Cargo', `<strong>${esc(r.cargo)}</strong>${r.area ? `<span class="sub">${esc(r.area)}</span>` : ''}`)}
       ${cell('Senioridade', esc(r.senioridade) || '·')}
-      ${cell('Empresa', `${esc(r.empresa) || '·'}${r.setor ? `<span class="sub">${esc(r.setor)}</span>` : ''}`)}
+      ${cell('Setor', esc(r.setor) || '·')}
       ${cell('Local', `${esc(r.cidade) || '·'}${r.modalidade ? `<span class="sub">${esc(r.modalidade)}</span>` : ''}`)}
       ${cell('Regime', r.regime ? `<span class="pill">${esc(r.regime)}</span>` : '·')}
       ${cell('Exp.', Number.isFinite(r.exp) ? `${r.exp} ${r.exp === 1 ? 'ano' : 'anos'}` : '·', 'num')}
-      ${cell('Salário', `<span class="money">${brl(r.salario)}</span>${r.bonus ? `<span class="sub">${esc(r.bonus)}</span>` : ''}`, 'num')}
+      ${cell('Salário', `<span class="money">${brl(r.salario)}</span>`, 'num')}
+      ${cell('Benefícios', r.bonus ? `<span class="bonus" title="${esc(r.bonus)}">${esc(r.bonus)}</span>` : '·', 'col-bonus')}
     </tr>`).join('');
 }
 
@@ -251,7 +257,7 @@ function showTip(evt, r) {
   const line1 = document.createElement('span');
   line1.textContent = [r.cargo, r.senioridade].filter(Boolean).join(' · ');
   const line2 = document.createElement('span');
-  line2.textContent = [r.empresa, r.regime, Number.isFinite(r.exp) ? `${r.exp} ${r.exp === 1 ? 'ano' : 'anos'}` : ''].filter(Boolean).join(' · ');
+  line2.textContent = [r.setor, r.regime, Number.isFinite(r.exp) ? `${r.exp} ${r.exp === 1 ? 'ano' : 'anos'}` : ''].filter(Boolean).join(' · ');
   tip.append(strong, line1, line2);
   tip.hidden = false;
   const host = tip.parentElement.getBoundingClientRect();
@@ -405,6 +411,11 @@ function bind() {
   let t;
   els.search.addEventListener('input', () => { clearTimeout(t); t = setTimeout(apply, 150); });
   [els.sen, els.area, els.setor, els.regime, els.mode].forEach(s => s.addEventListener('change', apply));
+  // Long benefit lists are clamped to 3 lines; click the row to read all of it
+  els.body.addEventListener('click', e => {
+    const tr = e.target.closest('tr');
+    if (tr && tr.querySelector('.bonus')) tr.classList.toggle('is-open');
+  });
   els.groupBy.addEventListener('change', renderCharts);
   els.mySalary.addEventListener('input', () => { clearTimeout(t); t = setTimeout(renderCharts, 150); });
   if (window.ResizeObserver) new ResizeObserver(() => { clearTimeout(t); t = setTimeout(renderCharts, 100); }).observe(els.dist);

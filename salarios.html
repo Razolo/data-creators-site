@@ -4,13 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Data Creators | Salários da comunidade</title>
-  <meta name="description" content="Salários reais de profissionais de dados da Data Creators, com cargo, senioridade, empresa e regime.">
+  <meta name="description" content="Salários reais de profissionais de dados da Data Creators, com cargo, senioridade, setor e regime.">
   <meta name="author" content="Heitor Sasaki">
   <link rel="canonical" href="https://data-creators-site.vercel.app/salarios">
 
   <meta property="og:type" content="website">
   <meta property="og:title" content="Data Creators | Salários da comunidade">
-  <meta property="og:description" content="Salários reais de profissionais de dados da Data Creators, com cargo, senioridade, empresa e regime.">
+  <meta property="og:description" content="Salários reais de profissionais de dados da Data Creators, com cargo, senioridade, setor e regime.">
   <meta property="og:image" content="https://data-creators-site.vercel.app/og-image.png">
   <meta property="og:url" content="https://data-creators-site.vercel.app/salarios">
   <meta property="og:site_name" content="Data Creators">
@@ -50,7 +50,7 @@
       <div class="container">
         <p class="kicker">Salários na DC</p>
         <h1 class="sal-title">Salários de quem tá na DC</h1>
-        <p class="sal-lead">Cada linha é um membro da comunidade que preencheu o próprio salário, com cargo, empresa e regime. Ninguém coloca nome, e a tabela atualiza sozinha a cada resposta nova.</p>
+        <p class="sal-lead">Cada linha é um membro da comunidade que preencheu o próprio salário, com cargo, setor e regime. Ninguém coloca nome, e a tabela atualiza sozinha a cada resposta nova.</p>
         <div class="sal-actions">
           <a href="#" id="formLink" class="btn btn-primary" target="_blank" rel="noopener">É DC? Preenche o teu</a>
         </div>
@@ -63,7 +63,7 @@
         <div class="sal-filters">
           <label class="sal-search">
             <span class="sr-only">Buscar</span>
-            <input type="search" id="salSearch" placeholder="Buscar cargo, empresa, setor, cidade..." autocomplete="off">
+            <input type="search" id="salSearch" placeholder="Buscar cargo, setor, cidade, benefício..." autocomplete="off">
           </label>
           <select id="fSen" aria-label="Senioridade"><option value="">Senioridade</option></select>
           <select id="fArea" aria-label="Área"><option value="">Área</option></select>
@@ -124,11 +124,12 @@
               <tr>
                 <th data-sort="cargo">Cargo</th>
                 <th data-sort="senioridade">Senioridade</th>
-                <th data-sort="empresa">Empresa</th>
+                <th data-sort="setor">Setor</th>
                 <th data-sort="local">Local</th>
                 <th data-sort="regime">Regime</th>
                 <th data-sort="exp" class="num">Exp.</th>
                 <th data-sort="salario" class="num is-sorted" aria-sort="descending">Salário</th>
+                <th class="col-bonus">Benefícios</th>
               </tr>
             </thead>
             <tbody id="salBody"></tbody>
