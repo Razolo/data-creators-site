@@ -1,0 +1,93 @@
+/* ========================================
+   Data Creators - Salários (on top of landing.css)
+   ======================================== */
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+.nav-link[aria-current="page"] { color: var(--sumi); font-weight: 600; }
+
+.sal-hero { padding: 64px 0 40px; }
+.sal-title {
+  font-family: var(--font-serif); font-weight: 500; color: var(--sumi);
+  font-size: clamp(36px, 5vw, 60px); line-height: 1.08; letter-spacing: -.02em; margin-bottom: 20px;
+}
+.sal-lead { font-size: 18px; color: var(--stone-3); max-width: 640px; }
+.sal-actions { margin-top: 28px; }
+.sal-note { margin-top: 20px; font-size: 14.5px; color: var(--stone-2); max-width: 640px; }
+
+.sal-data { padding-bottom: 96px; }
+
+.sal-stats {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  background: var(--card); border: 1px solid var(--hairline-soft); border-radius: var(--radius);
+  box-shadow: var(--shadow); overflow: hidden; margin-bottom: 28px;
+}
+.sal-stats > div { padding: 20px 22px; border-right: 1px solid var(--hairline-soft); }
+.sal-stats > div:last-child { border-right: 0; }
+.sal-stats dd { font-family: var(--font-serif); font-size: 30px; font-weight: 500; color: var(--sumi); line-height: 1.1; font-variant-numeric: tabular-nums; }
+.sal-stats dt { font-size: 13px; color: var(--stone-2); margin-top: 4px; }
+.sal-stats dt small { display: block; font-size: 12px; }
+
+.sal-filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.sal-search { flex: 1 1 260px; }
+.sal-search input, .sal-filters select {
+  width: 100%; font: inherit; font-size: 14.5px; color: var(--ink);
+  background: var(--card); border: 1px solid var(--hairline); border-radius: var(--radius-sm);
+  padding: 10px 12px; outline: 0;
+}
+.sal-filters select { width: auto; cursor: pointer; }
+.sal-search input:focus, .sal-filters select:focus { border-color: var(--indigo); box-shadow: 0 0 0 3px var(--indigo-tint); }
+.sal-clear { background: none; border: 0; font: inherit; font-size: 14px; color: var(--stone-2); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 6px; }
+.sal-clear:hover { color: var(--sumi); }
+
+.sal-count { margin: 18px 0 12px; font-size: 14px; color: var(--stone-2); }
+.sal-count strong { color: var(--sumi); }
+
+.sal-table-wrap { background: var(--card); border: 1px solid var(--hairline-soft); border-radius: var(--radius); box-shadow: var(--shadow); overflow-x: auto; }
+.sal-table { width: 100%; border-collapse: collapse; font-size: 15px; }
+.sal-table th {
+  text-align: left; font-family: var(--font-mono); font-size: 11.5px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--stone-2); padding: 14px 16px; border-bottom: 1px solid var(--hairline); cursor: pointer; white-space: nowrap; user-select: none;
+}
+.sal-table th:hover { color: var(--sumi); }
+.sal-table th.is-sorted { color: var(--indigo); }
+.sal-table th.is-sorted::after { content: " ↓"; }
+.sal-table th[aria-sort="ascending"]::after { content: " ↑"; }
+.sal-table td { padding: 14px 16px; border-bottom: 1px solid var(--hairline-soft); vertical-align: top; color: var(--ink); }
+.sal-table tbody tr:last-child td { border-bottom: 0; }
+.sal-table tbody tr:hover td { background: var(--paper); }
+.sal-table .num { text-align: right; white-space: nowrap; }
+.sal-table .sub { display: block; font-size: 13px; color: var(--stone-2); margin-top: 2px; }
+.sal-table .money { font-weight: 600; color: var(--sumi); font-variant-numeric: tabular-nums; }
+.pill { display: inline-block; padding: 2px 8px; border-radius: 4px; background: var(--indigo-tint); color: var(--indigo); font-size: 12.5px; font-weight: 600; }
+.sal-empty { text-align: center; color: var(--stone-2); padding: 40px 16px !important; }
+
+@media (max-width: 960px) {
+  .sal-stats { grid-template-columns: 1fr 1fr; }
+  .sal-stats > div:nth-child(2) { border-right: 0; }
+  .sal-stats > div:nth-child(-n+2) { border-bottom: 1px solid var(--hairline-soft); }
+}
+
+/* Phones: each row becomes a card */
+@media (max-width: 720px) {
+  .sal-hero { padding: 40px 0 28px; }
+  .sal-lead { font-size: 16.5px; }
+  .sal-actions .btn { width: 100%; }
+  .sal-stats dd { font-size: 24px; }
+  .sal-filters select { flex: 1 1 45%; }
+  .sal-table-wrap { background: none; border: 0; box-shadow: none; overflow: visible; }
+  .sal-table thead { display: none; }
+  .sal-table, .sal-table tbody, .sal-table tr, .sal-table td { display: block; width: 100%; }
+  .sal-table tr {
+    background: var(--card); border: 1px solid var(--hairline-soft); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 8px 4px; margin-bottom: 12px;
+  }
+  .sal-table td { border: 0; padding: 6px 14px; display: flex; justify-content: space-between; gap: 16px; text-align: right; }
+  .sal-table td::before { content: attr(data-label); font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--stone-2); text-align: left; padding-top: 3px; }
+  .sal-table td > * { text-align: right; }
+  .sal-table tbody tr:hover td { background: none; }
+  .sal-empty { display: block; }
+  .sal-empty::before { content: none !important; }
+}

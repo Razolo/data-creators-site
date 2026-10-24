@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data Creators | Salários da comunidade</title>
+  <meta name="description" content="Salários reais de profissionais de dados da Data Creators, com cargo, senioridade, empresa e regime.">
+  <meta name="author" content="Heitor Sasaki">
+  <link rel="canonical" href="https://data-creators-site.vercel.app/salarios">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Data Creators | Salários da comunidade">
+  <meta property="og:description" content="Salários reais de profissionais de dados da Data Creators, com cargo, senioridade, empresa e regime.">
+  <meta property="og:image" content="https://data-creators-site.vercel.app/og-image.png">
+  <meta property="og:url" content="https://data-creators-site.vercel.app/salarios">
+  <meta property="og:site_name" content="Data Creators">
+  <meta property="og:locale" content="pt_BR">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="icon" type="image/png" href="/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+JP:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/landing.css">
+  <link rel="stylesheet" href="/salarios.css">
+</head>
+<body>
+
+  <a href="/talentos" class="topbar">
+    <span>Recrutador ou gestor? <strong>Conhece o banco de talentos da DC →</strong></span>
+  </a>
+
+  <header class="header">
+    <div class="container header-inner">
+      <a href="/" class="logo-area" aria-label="Data Creators, início">
+        <img src="/logo.png" alt="" class="logo-img" width="36" height="36">
+        <span class="logo-text">DATA CREATORS</span>
+      </a>
+      <nav class="header-nav" aria-label="Principal">
+        <a href="/" class="nav-link">A comunidade</a>
+        <a href="/salarios" class="nav-link" aria-current="page">Salários</a>
+        <a href="/talentos" class="nav-link nav-link-muted">Para empresas</a>
+        <a href="/#entrar" class="btn btn-primary btn-sm">Quero entrar</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="sal-hero">
+      <div class="container">
+        <p class="kicker">Salários na DC</p>
+        <h1 class="sal-title">Salários de quem tá na DC</h1>
+        <p class="sal-lead">Cada linha é um membro da comunidade que preencheu o próprio salário, com cargo, empresa e regime. Ninguém coloca nome, e a tabela atualiza sozinha a cada resposta nova.</p>
+        <div class="sal-actions">
+          <a href="#" id="formLink" class="btn btn-primary" target="_blank" rel="noopener">É DC? Preenche o teu</a>
+        </div>
+        <p class="sal-note">Valores mensais brutos. Vale olhar o regime antes de comparar, porque salário CLT e PJ não se comparam direto.</p>
+      </div>
+    </section>
+
+    <section class="sal-data">
+      <div class="container">
+        <div class="sal-stats" id="salStats"></div>
+
+        <div class="sal-filters">
+          <label class="sal-search">
+            <span class="sr-only">Buscar</span>
+            <input type="search" id="salSearch" placeholder="Buscar cargo, empresa, setor, cidade..." autocomplete="off">
+          </label>
+          <select id="fSen" aria-label="Senioridade"><option value="">Senioridade</option></select>
+          <select id="fArea" aria-label="Área"><option value="">Área</option></select>
+          <select id="fRegime" aria-label="Regime"><option value="">Regime</option></select>
+          <select id="fMode" aria-label="Modalidade"><option value="">Modalidade</option></select>
+          <button type="button" class="sal-clear" id="salClear" hidden>Limpar</button>
+        </div>
+
+        <p class="sal-count"><strong id="salCount">0</strong> <span id="salCountLabel">respostas</span></p>
+
+        <div class="sal-table-wrap">
+          <table class="sal-table">
+            <thead>
+              <tr>
+                <th data-sort="cargo">Cargo</th>
+                <th data-sort="senioridade">Senioridade</th>
+                <th data-sort="empresa">Empresa</th>
+                <th data-sort="local">Local</th>
+                <th data-sort="regime">Regime</th>
+                <th data-sort="exp" class="num">Exp.</th>
+                <th data-sort="salario" class="num is-sorted" aria-sort="descending">Salário</th>
+              </tr>
+            </thead>
+            <tbody id="salBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div>
+        <p class="footer-muted">Recrutador ou gestor?</p>
+        <a href="/talentos" class="footer-strong">Conhece o banco de talentos da DC →</a>
+      </div>
+      <div class="footer-links">
+        <a href="https://www.linkedin.com/in/heitorsasaki/" target="_blank" rel="noopener">LinkedIn</a>
+        <a href="https://www.instagram.com/sasakiheitor" target="_blank" rel="noopener">Instagram</a>
+        <a href="https://heitorsasaki.substack.com" target="_blank" rel="noopener">Newsletter</a>
+      </div>
+      <p class="footer-copy">© <span id="year">2026</span> Data Creators · Heitor Sasaki</p>
+    </div>
+  </footer>
+
+  <script src="/salarios.js"></script>
+</body>
+</html>
