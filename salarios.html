@@ -60,8 +60,6 @@
 
     <section class="sal-data">
       <div class="container">
-        <div class="sal-stats" id="salStats"></div>
-
         <div class="sal-filters">
           <label class="sal-search">
             <span class="sr-only">Buscar</span>
@@ -69,9 +67,53 @@
           </label>
           <select id="fSen" aria-label="Senioridade"><option value="">Senioridade</option></select>
           <select id="fArea" aria-label="Área"><option value="">Área</option></select>
+          <select id="fSetor" aria-label="Setor"><option value="">Setor</option></select>
           <select id="fRegime" aria-label="Regime"><option value="">Regime</option></select>
           <select id="fMode" aria-label="Modalidade"><option value="">Modalidade</option></select>
           <button type="button" class="sal-clear" id="salClear" hidden>Limpar</button>
+        </div>
+
+        <div class="sal-stats" id="salStats"></div>
+
+        <div class="viz">
+          <div class="viz-head">
+            <h2 class="viz-title">Explorar os números</h2>
+            <div class="viz-controls">
+              <label class="viz-control">
+                <span>Agrupar por</span>
+                <select id="groupBy">
+                  <option value="senioridade">Senioridade</option>
+                  <option value="area">Área</option>
+                  <option value="setor">Setor</option>
+                  <option value="regime">Regime</option>
+                  <option value="modalidade">Modalidade</option>
+                </select>
+              </label>
+              <label class="viz-control">
+                <span>Compara com o teu salário</span>
+                <input type="text" id="mySalary" inputmode="numeric" placeholder="Ex.: 12000" autocomplete="off">
+              </label>
+            </div>
+          </div>
+          <p class="viz-compare" id="vizCompare" hidden></p>
+          <ul class="viz-legend" aria-label="Legenda">
+            <li><span class="key" style="--c: var(--s-clt)"></span>CLT</li>
+            <li><span class="key" style="--c: var(--s-pj)"></span>PJ</li>
+            <li><span class="key" style="--c: var(--s-other)"></span>Outro ou não informado</li>
+            <li><span class="key key-median"></span>Mediana do grupo</li>
+          </ul>
+
+          <div class="viz-grid">
+            <figure class="viz-card">
+              <figcaption><strong id="distTitle">Salário por senioridade</strong><span>Cada ponto é uma pessoa.</span></figcaption>
+              <div class="viz-plot" id="distPlot"></div>
+            </figure>
+            <figure class="viz-card">
+              <figcaption><strong>Salário por anos de experiência em dados</strong><span>Só aparece quem preencheu a experiência.</span></figcaption>
+              <div class="viz-plot" id="scatterPlot"></div>
+            </figure>
+          </div>
+          <div class="viz-tip" id="vizTip" role="status" hidden></div>
         </div>
 
         <p class="sal-count"><strong id="salCount">0</strong> <span id="salCountLabel">respostas</span></p>
